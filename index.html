@@ -224,8 +224,14 @@
   .ccard-top{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
   .ccard-top b{font-size:15px;}
   .ccard-badge{font-size:10.5px;font-weight:800;color:var(--brand-primary);background:rgba(255,106,26,.15);padding:2px 8px;border-radius:20px;margin-left:auto;white-space:nowrap;}
+  .ccard-open{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--brand-primary);white-space:nowrap;}
   .ccard-meta{font-size:12.5px;color:var(--text-dim);margin-bottom:12px;}
   .ccard-btns{display:flex;flex-wrap:wrap;gap:6px;}
+  .member-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .member-head-btns{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;}
+  .pnav{display:flex;gap:8px;flex-wrap:wrap;}
+  .pnav .pnav-btn{background:var(--card-2);border:1px solid var(--line);color:var(--text-dim);border-radius:12px;padding:11px 16px;font-size:13.5px;font-weight:800;cursor:pointer;}
+  .pnav .pnav-btn.on{background:linear-gradient(135deg,rgba(255,106,26,.2),rgba(183,228,0,.12));color:#fff;border-color:rgba(255,106,26,.5);}
 
   /* ===== 사진 그리드 (식단·피드백) ===== */
   .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
@@ -490,8 +496,6 @@ function copyText(txt,label){
 /* ---------- 탭 정의 ---------- */
 const TABS = [
   {id:"clients",  name:"고객 관리",     ic:"👥"},
-  {id:"program",  name:"운동 프로그램",  ic:"🏋️"},
-  {id:"feedback", name:"피드백·식단",   ic:"📝"},
   {id:"content",  name:"인스타 콘텐츠", ic:"📱"},
   {id:"checkin",  name:"주간 체크인",   ic:"💬"},
   {id:"calendar", name:"콘텐츠 캘린더", ic:"📅"},
@@ -510,7 +514,7 @@ function renderNav(){
   });
 }
 
-function go(tab){ activeTab=tab; renderNav(); render(); window.scrollTo(0,0); }
+function go(tab){ activeTab=tab; openMember=null; renderNav(); render(); window.scrollTo(0,0); }
 
 /* ---------- 공유 고객 선택 바 ---------- */
 function clientBarHTML(){
@@ -531,17 +535,14 @@ function viewClients(){
   const list = DB.clients.length===0
     ? `<div class="empty"><div class="big">👥</div>아직 등록된 고객이 없어요.<br/>첫 고객을 등록하면 모든 탭에서 불러 쓸 수 있어요.</div>`
     : `<div class="client-cards">`+DB.clients.map(c=>{
-        const active=c.id===currentClientId;
-        return `<div class="ccard ${active?'active':''}" onclick="selectClient('${c.id}')">
+        return `<div class="ccard" onclick="openMemberDetail('${c.id}')">
           <div class="ccard-top">
             <b>${esc(c.name)}</b>
             <span class="pill">${esc(c.goal)}</span>
-            ${active?'<span class="ccard-badge">작업중 ✓</span>':''}
+            <span class="ccard-open">열기 →</span>
           </div>
           <div class="ccard-meta">${c.age?esc(c.age)+"세 · ":""}${esc(c.sex||"")} · ${esc(c.level)}${DB.programs[c.id]?' · 🏋️ 프로그램 있음':''}</div>
           <div class="ccard-btns" onclick="event.stopPropagation()">
-            <button class="btn btn-ghost btn-sm" onclick="openRecords('${c.id}')">📋 기록</button>
-            <button class="btn btn-ghost btn-sm" onclick="copyPortalLink('${c.id}')">🔗 포털</button>
             <button class="btn btn-ghost btn-sm" onclick="openClient('${c.id}')">수정</button>
             <button class="btn btn-danger btn-sm" onclick="delClient('${c.id}')">삭제</button>
           </div>
@@ -564,7 +565,33 @@ function viewClients(){
       </div>
     </div>`;
 }
-function selectClient(id){ currentClientId=id; const c=DB.clients.find(x=>x.id===id); render(); if(c) toast(c.name+"님 선택됨 ✓"); }
+let openMember=null, detailSection="program";
+function openMemberDetail(id){ currentClientId=id; openMember=id; detailSection="program"; render(); }
+function closeMemberDetail(){ openMember=null; render(); }
+function setDetailSection(s){ detailSection=s; render(); }
+function memberDetailView(c){
+  if(!c){ openMember=null; return viewClients(); }
+  currentClientId=c.id;
+  const sec=detailSection||"program";
+  const nb=(k,ic,l)=>`<button class="pnav-btn ${sec===k?'on':''}" onclick="setDetailSection('${k}')">${ic} ${l}</button>`;
+  const body = sec==="diet" ? dietSection(c) : (sec==="feedback" ? feedbackFormSection(c) : programSection(c));
+  return `<div class="row-actions no-print" style="margin-bottom:8px;"><button class="btn btn-ghost btn-sm" onclick="closeMemberDetail()">← 회원 목록</button></div>
+    <div class="member-head no-print">
+      <div style="min-width:0;">
+        <h1 class="page-title" style="margin-bottom:3px;">${esc(c.name)}</h1>
+        <div class="ccard-meta" style="margin:0;">🎯 ${esc(c.goal)} · ${esc(c.level)}${c.age?" · "+esc(c.age)+"세":""}${c.sex?" · "+esc(c.sex):""}${c.note?" · "+esc(c.note):""}</div>
+      </div>
+      <div class="member-head-btns">
+        <button class="btn btn-ghost btn-sm" onclick="openRecords('${c.id}')">📋 기록</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyPortalLink('${c.id}')">🔗 포털 링크</button>
+        <button class="btn btn-ghost btn-sm" onclick="openClient('${c.id}')">수정</button>
+      </div>
+    </div>
+    <div class="pnav no-print" style="margin:14px 0 16px;">
+      ${nb('program','🏋️','운동 프로그램')}${nb('diet','🍽️','식단')}${nb('feedback','📝','피드백')}
+    </div>
+    ${body}`;
+}
 
 function openClient(id){
   const c = id ? DB.clients.find(x=>x.id===id) : null;
@@ -807,8 +834,15 @@ function programResultHTML(p, c){
     const dayTables = w.days.map((d,di)=>{
       return (editWi===wi && editDi===di) ? dayEditHTML(dayDraft) : dayReadHTML(d, wi, di);
     }).join("");
+    const head = editWeek===wi
+      ? `<input type="text" id="wkTag" value="${esc(w.prog.tag)}" style="width:88px;font-size:12px;padding:6px 8px;"/>
+         <input type="text" id="wkNote" value="${esc(w.prog.note)}" style="flex:1;min-width:0;font-size:12.5px;padding:6px 8px;"/>
+         <button class="btn btn-primary btn-sm no-print" onclick="saveWeekEdit(${wi})">저장</button>
+         <button class="btn btn-ghost btn-sm no-print" onclick="cancelWeekEdit()">취소</button>`
+      : `<span class="tag">${esc(w.prog.tag)}</span> <span style="flex:1;">${esc(w.prog.note)}</span>
+         <button class="btn btn-ghost btn-sm no-print" style="padding:2px 8px;" onclick="startEditWeek(${wi})">✏️ 편집</button>`;
     return `<div class="week-block">
-      <div class="week-head"><span class="tag">${esc(w.prog.tag)}</span> ${esc(w.prog.note)}</div>
+      <div class="week-head">${head}</div>
       <div class="week-days">${dayTables}</div>
       <div style="padding:8px 14px 12px;"><button class="btn btn-ghost btn-sm no-print" onclick="addDayToWeek(${wi})">+ 이 주에 Day 추가</button></div>
     </div>`;
@@ -888,10 +922,21 @@ function copyProgram(){
   copyText(t,"프로그램 복사");
 }
 
-/* ---------- 프로그램 직접 편집 (Day별 인라인) ---------- */
-let editWi=null, editDi=null, dayDraft=null;
-function clearDayEdit(){ editWi=null; editDi=null; dayDraft=null; }
+/* ---------- 프로그램 직접 편집 (Day별 · 주차 제목 인라인) ---------- */
+let editWi=null, editDi=null, dayDraft=null, editWeek=null;
+function clearDayEdit(){ editWi=null; editDi=null; dayDraft=null; editWeek=null; }
+function startEditWeek(wi){ editWi=null; editDi=null; dayDraft=null; editWeek=wi; render(); }
+function cancelWeekEdit(){ editWeek=null; render(); }
+function saveWeekEdit(wi){
+  const c=DB.clients.find(x=>x.id===currentClientId); const p=c&&DB.programs[c.id];
+  if(!p){ editWeek=null; render(); return; }
+  const tag=document.getElementById("wkTag"), note=document.getElementById("wkNote");
+  if(tag && tag.value.trim()) p.weeksArr[wi].prog.tag=tag.value.trim();
+  if(note) p.weeksArr[wi].prog.note=note.value;
+  saveDB(); cloudPublish(c.id); editWeek=null; render(); toast("저장되었습니다 ✓");
+}
 function startEditDay(wi,di){
+  editWeek=null;
   const c=DB.clients.find(x=>x.id===currentClientId); const p=c&&DB.programs[c.id]; if(!p) return;
   const d=p.weeksArr[wi]&&p.weeksArr[wi].days[di]; if(!d) return;
   dayDraft=JSON.parse(JSON.stringify(d));
@@ -944,14 +989,16 @@ function viewProgram(){
   }
   if(!currentClientId) currentClientId=DB.clients[0].id;
   const c = DB.clients.find(x=>x.id===currentClientId);
+  return `<h1 class="page-title">운동 프로그램 생성기</h1>
+    <p class="page-sub">선택한 고객 정보로 주차별(세트/반복/점진 부하) 프로그램을 만들고 PDF로 저장하세요.</p>
+    ${clientBarHTML()}${programSection(c)}`;
+}
+function programSection(c){
   const existing = DB.programs[c.id];
   const equipList=["맨몸","덤벨","바벨","머신"];
   window._equips = window._equips || ["맨몸","덤벨"];
   const eqChips = equipList.map(e=>`<span class="chip ${window._equips.includes(e)?'on':''}" onclick="toggleEquip('${e}')">${e}</span>`).join("");
-
-  return `<h1 class="page-title">운동 프로그램 생성기</h1>
-    <p class="page-sub">선택한 고객 정보로 주차별(세트/반복/점진 부하) 프로그램을 만들고 PDF로 저장하세요.</p>
-    ${clientBarHTML()}
+  return `
     ${existing?`<div id="doneStatus"></div>`:""}
     <div class="card no-print">
       <h3>⚙️ 설정</h3>
@@ -1312,29 +1359,31 @@ function compressImage(file, maxW, cb){
 }
 function fmtDay(ts){ if(!ts) return ""; const d=new Date(ts); return `${d.getMonth()+1}.${d.getDate()}`; }
 
+function dietSection(c){
+  return `<div class="card">
+    <h3>🍽️ ${esc(c.name)}님이 올린 식단 사진</h3>
+    <div id="dietView"><p style="color:var(--text-dim);font-size:13px;">불러오는 중…</p></div>
+  </div>`;
+}
+function feedbackFormSection(c){
+  return `<div class="card">
+    <h3>📝 피드백 보내기</h3>
+    <textarea id="fbText" placeholder="예) 오늘 스쿼트 폼 정말 좋아졌어요! 다음엔 무게 살짝 올려볼게요 💪"></textarea>
+    <div style="margin-top:10px;"><label class="fld">사진 첨부 (선택 · 자세 교정 사진 등)</label><input type="file" id="fbPhoto" accept="image/*" /></div>
+    <div class="row-actions"><button class="btn btn-primary" onclick="sendFeedback()">피드백 보내기</button></div>
+    <div id="fbList" style="margin-top:8px;"></div>
+    <div class="disclaimer">⚠️ 건강·부상·식단 피드백은 일반적 조언이며 의료행위가 아니에요. 통증·질환은 전문의 상담을 함께 안내하세요.</div>
+  </div>`;
+}
 function viewFeedback(){
   if(DB.clients.length===0){
-    return `<h1 class="page-title">피드백 · 식단</h1><p class="page-sub">회원에게 피드백을 보내고, 회원이 올린 식단 사진을 확인해요.</p>
-    <div class="card"><div class="empty"><div class="big">📝</div>먼저 <b>고객 관리</b>에서 고객을 등록해 주세요.</div>
-    <div class="row-actions" style="justify-content:center"><button class="btn btn-primary" onclick="go('clients')">고객 등록하러 가기</button></div></div>`;
+    return `<h1 class="page-title">피드백 · 식단</h1><div class="card"><div class="empty"><div class="big">📝</div>먼저 <b>고객 관리</b>에서 고객을 등록해 주세요.</div></div>`;
   }
   if(!currentClientId) currentClientId=DB.clients[0].id;
   const c=DB.clients.find(x=>x.id===currentClientId);
   return `<h1 class="page-title">피드백 · 식단</h1>
-    <p class="page-sub">회원이 올린 식단 사진을 보고, PT 후 피드백(사진 첨부 가능)을 보내요. 고객 포털에서 회원이 바로 봐요.</p>
-    ${clientBarHTML()}
-    <div class="card">
-      <h3>🍽️ ${esc(c.name)}님이 올린 식단 사진</h3>
-      <div id="dietView"><p style="color:var(--text-dim);font-size:13px;">불러오는 중…</p></div>
-    </div>
-    <div class="card">
-      <h3>📝 피드백 보내기</h3>
-      <textarea id="fbText" placeholder="예) 오늘 스쿼트 폼 정말 좋아졌어요! 다음엔 무게 살짝 올려볼게요 💪"></textarea>
-      <div style="margin-top:10px;"><label class="fld">사진 첨부 (선택 · 자세 교정 사진 등)</label><input type="file" id="fbPhoto" accept="image/*" /></div>
-      <div class="row-actions"><button class="btn btn-primary" onclick="sendFeedback()">피드백 보내기</button></div>
-      <div id="fbList" style="margin-top:8px;"></div>
-      <div class="disclaimer">⚠️ 건강·부상·식단 피드백은 일반적 조언이며 의료행위가 아니에요. 통증·질환은 전문의 상담을 함께 안내하세요.</div>
-    </div>`;
+    <p class="page-sub">회원이 올린 식단 사진을 보고, PT 후 피드백(사진 첨부 가능)을 보내요.</p>
+    ${clientBarHTML()}${dietSection(c)}${feedbackFormSection(c)}`;
 }
 async function loadDiet(){
   const el=document.getElementById("dietView"); if(!el) return;
@@ -1385,18 +1434,21 @@ function delFeedback(cid, id){
 /* ---------- 라우터 ---------- */
 function render(){
   const el=document.getElementById("content");
-  if(activeTab==="clients") el.innerHTML=viewClients();
-  else if(activeTab==="program") el.innerHTML=viewProgram();
+  if(activeTab==="clients"){
+    el.innerHTML = openMember ? memberDetailView(DB.clients.find(x=>x.id===openMember)) : viewClients();
+  }
   else if(activeTab==="content") el.innerHTML=viewContent();
   else if(activeTab==="checkin") el.innerHTML=viewCheckin();
   else if(activeTab==="calendar") el.innerHTML=viewCalendar();
   else if(activeTab==="faq") el.innerHTML=viewFaq();
-  else if(activeTab==="feedback") el.innerHTML=viewFeedback();
   renderNav();
   if(activeTab==="faq") renderFaqLog();
-  if(activeTab==="feedback"){ setTimeout(()=>{ loadDiet(); loadFeedback(); },50); }
   stopDoneWatch();
-  if(activeTab==="program") setTimeout(watchDoneStatus,50);
+  if(activeTab==="clients" && openMember){
+    if(detailSection==="program") setTimeout(watchDoneStatus,50);
+    else if(detailSection==="diet") setTimeout(loadDiet,50);
+    else if(detailSection==="feedback") setTimeout(loadFeedback,50);
+  }
 }
 
 /* ---------- 초기화 ---------- */
