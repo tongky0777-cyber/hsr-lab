@@ -216,6 +216,17 @@
   .edrow input{font-size:13px;padding:8px 9px;}
   .edrow .btn,.edday-h .btn{flex:0 0 auto;}
 
+  /* ===== 고객 카드 ===== */
+  .client-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;}
+  .ccard{background:var(--bg-soft);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:.15s;}
+  .ccard:hover{border-color:var(--brand-primary);}
+  .ccard.active{border-color:var(--brand-primary);box-shadow:inset 0 0 0 1px var(--brand-primary);background:rgba(255,106,26,.06);}
+  .ccard-top{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+  .ccard-top b{font-size:15px;}
+  .ccard-badge{font-size:10.5px;font-weight:800;color:var(--brand-primary);background:rgba(255,106,26,.15);padding:2px 8px;border-radius:20px;margin-left:auto;white-space:nowrap;}
+  .ccard-meta{font-size:12.5px;color:var(--text-dim);margin-bottom:12px;}
+  .ccard-btns{display:flex;flex-wrap:wrap;gap:6px;}
+
   /* ===== 사진 그리드 (식단·피드백) ===== */
   .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
   .photo-item{background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
@@ -519,20 +530,23 @@ function clientBarHTML(){
 function viewClients(){
   const list = DB.clients.length===0
     ? `<div class="empty"><div class="big">👥</div>아직 등록된 고객이 없어요.<br/>첫 고객을 등록하면 모든 탭에서 불러 쓸 수 있어요.</div>`
-    : `<div class="client-list">`+DB.clients.map(c=>`
-        <div class="client-item">
-          <div class="client-meta">
+    : `<div class="client-cards">`+DB.clients.map(c=>{
+        const active=c.id===currentClientId;
+        return `<div class="ccard ${active?'active':''}" onclick="selectClient('${c.id}')">
+          <div class="ccard-top">
             <b>${esc(c.name)}</b>
-            <small>${c.age?esc(c.age)+"세 · ":""}${esc(c.sex||"")} · ${esc(c.level)}</small>
-          </div>
-          <div class="sp">
             <span class="pill">${esc(c.goal)}</span>
+            ${active?'<span class="ccard-badge">작업중 ✓</span>':''}
+          </div>
+          <div class="ccard-meta">${c.age?esc(c.age)+"세 · ":""}${esc(c.sex||"")} · ${esc(c.level)}${DB.programs[c.id]?' · 🏋️ 프로그램 있음':''}</div>
+          <div class="ccard-btns" onclick="event.stopPropagation()">
             <button class="btn btn-ghost btn-sm" onclick="openRecords('${c.id}')">📋 기록</button>
-            <button class="btn btn-ghost btn-sm" onclick="copyPortalLink('${c.id}')">🔗 포털 링크</button>
+            <button class="btn btn-ghost btn-sm" onclick="copyPortalLink('${c.id}')">🔗 포털</button>
             <button class="btn btn-ghost btn-sm" onclick="openClient('${c.id}')">수정</button>
             <button class="btn btn-danger btn-sm" onclick="delClient('${c.id}')">삭제</button>
           </div>
-        </div>`).join("")+`</div>`;
+        </div>`;
+      }).join("")+`</div>`;
 
   const cloudStatus = cloudOn
     ? `<span class="pill" style="color:var(--ok);border-color:rgba(55,214,122,.4);">🟢 공유·포털 켜짐</span>`
@@ -540,7 +554,7 @@ function viewClients(){
 
   return `
     <h1 class="page-title">고객 관리</h1>
-    <p class="page-sub">${cloudOn?"이 목록은 클라우드에 저장돼 코치·관리자가 같은 화면을 봐요.":"여기서 등록한 고객을 모든 탭에서 공유해서 써요."} '기록'으로 진행 메모를, '포털 링크'로 고객이 직접 볼 수 있는 링크를 만들어요.</p>
+    <p class="page-sub">${cloudOn?"이 목록은 클라우드에 저장돼 코치·관리자가 같은 화면을 봐요.":"여기서 등록한 고객을 모든 탭에서 공유해서 써요."} <b>카드를 누르면</b> 그 회원이 '작업 대상'으로 선택돼요.</p>
     <div class="card">
       <h3>👥 내 고객 (${DB.clients.length}) &nbsp; ${cloudStatus}</h3>
       ${list}
@@ -550,6 +564,7 @@ function viewClients(){
       </div>
     </div>`;
 }
+function selectClient(id){ currentClientId=id; const c=DB.clients.find(x=>x.id===id); render(); if(c) toast(c.name+"님 선택됨 ✓"); }
 
 function openClient(id){
   const c = id ? DB.clients.find(x=>x.id===id) : null;
@@ -1070,8 +1085,11 @@ function generateContent(){
   toast("콘텐츠가 생성되었습니다 ✓");
 }
 
+function fillTopic(id){ const c=DB.contents.find(x=>x.id===id); const el=document.getElementById("ctTopic"); if(c&&el){ el.value=c.topic; el.focus(); } }
+function delContent(id){ DB.contents=DB.contents.filter(x=>x.id!==id); saveDB(); render(); }
+function clearContents(){ if(!confirm("최근 주제를 모두 지울까요?")) return; DB.contents=[]; saveDB(); render(); toast("최근 주제 지움"); }
 function viewContent(){
-  const recent = DB.contents.slice(0,6).map(c=>`<span class="chip" onclick="document.getElementById('ctTopic').value='${esc(c.topic)}'">${esc(c.topic)}</span>`).join("");
+  const recent = DB.contents.slice(0,8).map(c=>`<span class="chip" onclick="fillTopic('${c.id}')">${esc(c.topic)} <b onclick="event.stopPropagation();delContent('${c.id}')" style="cursor:pointer;color:var(--text-mute);margin-left:3px;">✕</b></span>`).join("");
   return `<h1 class="page-title">인스타 콘텐츠 생성기</h1>
     <p class="page-sub">주제 하나만 넣으면 ${COACH} 코치 말투로 릴스 훅·대본·캡션·해시태그를 만들어요.</p>
     <div class="card no-print">
@@ -1080,7 +1098,7 @@ function viewContent(){
         <input type="text" id="ctTopic" placeholder="예) 스쿼트 무릎 통증, 겨울 다이어트, 힙업 운동" onkeydown="if(event.key==='Enter')generateContent()" /></div>
       <div style="margin-top:14px;"><label class="fld">말투 톤</label>
         <select id="ctTone"><option value="친근">친근한 서린쌤 (기본)</option><option value="전문적">전문적·신뢰감</option><option value="유쾌">유쾌·에너지</option></select></div>
-      ${recent?`<div style="margin-top:14px;"><label class="fld">최근 주제</label><div class="chips">${recent}</div></div>`:""}
+      ${recent?`<div style="margin-top:14px;"><label class="fld" style="display:flex;align-items:center;">최근 주제 <button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:2px 9px;" onclick="clearContents()">전체 지우기</button></label><div class="chips">${recent}</div></div>`:""}
       <div class="row-actions"><button class="btn btn-primary" onclick="generateContent()">⚡ 콘텐츠 생성</button></div>
     </div>
     <div id="ctOut"></div>`;
@@ -1196,6 +1214,7 @@ function calendarResultHTML(days){
       <button class="btn btn-primary" onclick="window.print()">📄 PDF로 저장 / 인쇄</button>
       <button class="btn btn-lime" onclick="copyCalendar()">📋 텍스트 복사</button>
       <button class="btn btn-ghost" onclick="generateCalendar()">↻ 다시 생성</button>
+      <button class="btn btn-danger" onclick="if(confirm('캘린더를 삭제할까요?')){delete DB._calendar;saveDB();render();toast('캘린더 삭제됨');}">🗑 삭제</button>
     </div>
   </div>`;
 }
@@ -1232,7 +1251,9 @@ const FAQ_KB=[
   {k:["언제","변화","효과","얼마나","몇개월","몇 개월"], a:"보통 본인은 4주쯤 컨디션·힘의 변화를 먼저 느끼고, 눈에 띄는 몸 변화는 8~12주부터 나와요. 2~4주마다 사진으로 기록해두면 변화가 훨씬 잘 보여요 😊 조급함은 금물!"},
   {k:["쉬는날","휴식","쉬어도","회복","자도"], a:"쉬는 날도 운동만큼 중요해요! 근육은 쉴 때 자라거든요. 완전히 눕기보다 가볍게 걷기·스트레칭 같은 액티브 리커버리를 하면 회복이 더 빨라요. 잠도 푹 주무세요 😴"},
 ];
-let faqLog=[{role:"bot",text:`안녕하세요! ${COACH} 코치의 AI 도우미예요 🤖\n운동·식단·자세·통증 등 궁금한 걸 편하게 물어보세요.\n(예: "단백질 얼마나 먹어요?", "스쿼트 무릎이 아파요")`}];
+function faqGreeting(){ return {role:"bot",text:`안녕하세요! ${COACH} 코치의 AI 도우미예요 🤖\n운동·식단·자세·통증 등 궁금한 걸 편하게 물어보세요.\n(예: "단백질 얼마나 먹어요?", "스쿼트 무릎이 아파요")`}; }
+let faqLog=[faqGreeting()];
+function clearFaq(){ if(!confirm("대화를 모두 지울까요?")) return; faqLog=[faqGreeting()]; renderFaqLog(); toast("대화 지움"); }
 function faqAnswer(q){
   const text=q.toLowerCase(); let best=null,score=0;
   FAQ_KB.forEach(it=>{ let s=0; it.k.forEach(kw=>{ if(text.includes(kw.toLowerCase())) s++; }); if(s>score){score=s;best=it;} });
@@ -1258,6 +1279,7 @@ function viewFaq(){
   return `<h1 class="page-title">FAQ 챗봇</h1>
     <p class="page-sub">폼·식단·통증 등 자주 묻는 질문에 ${COACH} 코치 말투로 답하는 도우미예요. 고객에게 링크로 공유해도 좋아요.</p>
     <div class="card">
+      <div style="display:flex;align-items:center;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-dim);">대화</span><button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="clearFaq()">🗑 대화 지우기</button></div>
       <div class="chat" id="faqChat"></div>
       <div class="qbtns">${quick.map(q=>`<button class="qbtn" onclick='faqSend(${JSON.stringify(q)})'>${esc(q)}</button>`).join("")}</div>
       <div class="chat-in">
