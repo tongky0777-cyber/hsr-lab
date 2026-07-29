@@ -764,21 +764,31 @@ function doneStatusHTML(p,comp){
   }));
   return `<div class="card"><h3>📊 고객 완료 현황</h3>
     <p style="font-size:14.5px;margin:0 0 5px;">완료 <b style="color:var(--ok)">${doneDays}일</b> · 진행 중 <b style="color:#ffcf3f">${partDays}일</b> · 미시작 ${totalDays-doneDays-partDays}일</p>
-    <p style="font-size:12.5px;color:var(--text-dim);margin:0 0 12px;">전체 운동 ${totalEx}개 중 <b>${doneEx}개</b> 완료 ${doneEx>0?'🔥':''} &nbsp;·&nbsp; 고객이 포털에서 체크하면 여기에 실시간으로 쌓여요 (최신 상태는 ↻ 새로고침)</p>
-    <div class="chips">${badges.join("")}</div>
-    <button class="btn btn-ghost btn-sm" style="margin-top:12px;" onclick="refreshDoneStatus()">↻ 새로고침</button></div>`;
+    <p style="font-size:12.5px;color:var(--text-dim);margin:0 0 12px;">전체 운동 ${totalEx}개 중 <b>${doneEx}개</b> 완료 ${doneEx>0?'🔥':''} &nbsp;·&nbsp; 고객이 포털에서 체크하면 <b style="color:var(--ok)">실시간으로 자동 반영</b>돼요 ⚡</p>
+    <div class="chips">${badges.join("")}</div></div>`;
 }
-async function refreshDoneStatus(){
+/* 실시간 감시: 고객이 포털에서 체크하는 즉시 자동 갱신 (onSnapshot) */
+let doneUnsub=null;
+function stopDoneWatch(){ if(doneUnsub){ try{doneUnsub();}catch(e){} doneUnsub=null; } }
+function watchDoneStatus(){
+  stopDoneWatch();
   const el=document.getElementById("doneStatus"); if(!el) return;
   const c=DB.clients.find(x=>x.id===currentClientId); const p=c&&DB.programs[c.id]; if(!p) return;
   if(!cloudOn){ el.innerHTML=`<div class="disclaimer">고객 포털(Firebase)이 켜지면 여기서 고객의 완료 체크 현황을 볼 수 있어요.</div>`; return; }
   el.innerHTML=`<p style="color:var(--text-dim);font-size:13px;margin-top:14px;">완료 현황 불러오는 중…</p>`;
-  try{
-    const snap=await cloud.collection("completions").doc(c.id).get();
-    const comp=(snap.exists&&snap.data())||{};
-    el.innerHTML=doneStatusHTML(p,comp);
-  }catch(e){ el.innerHTML=`<p style="color:var(--text-mute);font-size:12px;margin-top:14px;">완료 현황을 불러오지 못했어요.</p>`; }
+  const cid=c.id;
+  doneUnsub = cloud.collection("completions").doc(cid).onSnapshot(
+    snap=>{
+      if(currentClientId!==cid) return;
+      const comp=(snap.exists&&snap.data())||{};
+      const cur=DB.clients.find(x=>x.id===cid), pp=cur&&DB.programs[cid], box=document.getElementById("doneStatus");
+      if(pp&&box) box.innerHTML=doneStatusHTML(pp,comp);
+    },
+    err=>{ console.warn("done watch",err); const e2=document.getElementById("doneStatus"); if(e2) e2.innerHTML=`<p style="color:var(--text-mute);font-size:12px;margin-top:14px;">완료 현황을 불러오지 못했어요.</p>`; }
+  );
 }
+// 수동 새로고침 호환용(버튼 제거됐지만 혹시 호출돼도 안전)
+function refreshDoneStatus(){ watchDoneStatus(); }
 
 function copyProgram(){
   const c = DB.clients.find(x=>x.id===currentClientId); const p=DB.programs[c.id]; if(!p) return;
@@ -1154,7 +1164,8 @@ function render(){
   else if(activeTab==="faq") el.innerHTML=viewFaq();
   renderNav();
   if(activeTab==="faq") renderFaqLog();
-  if(activeTab==="program") setTimeout(refreshDoneStatus,50);
+  stopDoneWatch();
+  if(activeTab==="program") setTimeout(watchDoneStatus,50);
 }
 
 /* ---------- 초기화 ---------- */

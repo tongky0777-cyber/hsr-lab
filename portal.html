@@ -36,11 +36,18 @@
   .week{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:12px;}
   .week-h{background:var(--card-2);padding:10px 13px;font-weight:800;font-size:13px;display:flex;align-items:center;gap:9px;}
   .tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(183,228,0,.18);color:var(--brand-accent);}
-  .day{padding:10px 13px 13px;}
-  .day-t{display:flex;align-items:center;gap:8px;margin:6px 0 9px;font-weight:800;font-size:13px;}
-  .daychip{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--brand-primary);color:#fff;font-weight:700;}
-  .day-badge{margin-left:auto;font-size:11px;padding:3px 10px;border-radius:20px;background:var(--card-2);color:var(--dim);border:1px solid var(--line);}
+  .day{border-top:1px solid var(--line);}
+  .day:first-child{border-top:0;}
+  .day-head{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;color:var(--text);padding:13px 13px;cursor:pointer;text-align:left;font-weight:800;font-size:13px;}
+  .day-head:active{opacity:.7;}
+  .day-parts{flex:1;}
+  .daychip{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--brand-primary);color:#fff;font-weight:700;flex:0 0 auto;}
+  .day-badge{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--card-2);color:var(--dim);border:1px solid var(--line);flex:0 0 auto;}
   .day-badge.done{background:rgba(55,214,122,.16);color:var(--ok);border-color:rgba(55,214,122,.45);}
+  .chev{color:var(--dim);font-size:13px;transition:transform .2s;flex:0 0 auto;}
+  .day.collapsed .chev{transform:rotate(-90deg);}
+  .day-body{padding:0 13px 14px;}
+  .day.collapsed .day-body{display:none;}
 
   .ex-list{display:flex;flex-direction:column;gap:7px;}
   .ex{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--bg-soft);border:1px solid var(--line);border-radius:11px;padding:11px 13px;color:var(--text);cursor:pointer;transition:.12s;}
@@ -123,11 +130,17 @@ function programHTML(p){
         return `<button class="ex ${on?'on':''}" onclick="toggleItem('${k}',this)">
           <span class="tick">✓</span><span class="exn">${it.label}<em>${it.sub}</em></span></button>`;
       }).join("");
-      return `<div class="day">
-        <div class="day-t"><span class="daychip">DAY ${d.day}</span> <span>${d.parts.map(esc).join(" · ")}</span>
-          <span class="day-badge ${allDone?'done':''}" id="db_${dayKey}">${dn}/${keys.length}</span></div>
-        <div class="ex-list">${rows}</div>
-        <div class="day-done ${allDone?'show':''}" id="dd_${dayKey}">🎉 오늘 운동 끝! 정말 잘하셨어요</div>
+      return `<div class="day" id="day_${dayKey}">
+        <button class="day-head" onclick="toggleDay('${dayKey}')">
+          <span class="daychip">DAY ${d.day}</span>
+          <span class="day-parts">${d.parts.map(esc).join(" · ")}</span>
+          <span class="day-badge ${allDone?'done':''}" id="db_${dayKey}">${dn}/${keys.length}</span>
+          <span class="chev">▾</span>
+        </button>
+        <div class="day-body">
+          <div class="ex-list">${rows}</div>
+          <div class="day-done ${allDone?'show':''}" id="dd_${dayKey}">🎉 오늘 운동 끝! 정말 잘하셨어요</div>
+        </div>
       </div>`;
     }).join("");
     return `<div class="week"><div class="week-h"><span class="tag">${esc(w.prog.tag)}</span> ${esc(w.prog.note)}</div>${days}</div>`;
@@ -155,13 +168,32 @@ function updateProgress(){
   let done=0; state.days.forEach(d=>{ const comp=state.data.completions||{}; if(d.keys.length>0&&d.keys.every(k=>comp[k]))done++; });
   el.innerHTML=`이번 프로그램 <b>${done} / ${state.days.length}일</b> 완료 ${done>0?'🔥':''}`;
 }
+function toggleDay(dayKey){ const el=$("day_"+dayKey); if(el) el.classList.toggle("collapsed"); }
+function dayDone(d){ const comp=state.data.completions||{}; return d.keys.length>0 && d.keys.every(k=>comp[k]); }
+function applyDayCollapse(){
+  // '해야 할 하루'(첫 미완료 Day)만 펼치고 나머지는 접기
+  let firstOpen=null;
+  state.days.forEach(d=>{ if(firstOpen===null && !dayDone(d)) firstOpen=d.dayKey; });
+  if(firstOpen===null && state.days.length) firstOpen=state.days[state.days.length-1].dayKey; // 전부 완료면 마지막만
+  state.days.forEach(d=>{ const el=$("day_"+d.dayKey); if(!el) return; el.classList.toggle("collapsed", d.dayKey!==firstOpen); });
+}
 function toggleItem(key, el){
   const comp=state.data.completions=state.data.completions||{};
   const now=!comp[key]; comp[key]=now;
   el.className="ex"+(now?" on":"");
-  updateDay(dayKeyOf(key)); updateProgress();
+  const dayKey=dayKeyOf(key);
+  updateDay(dayKey); updateProgress();
   if(state.db && state.id){
     state.db.collection("completions").doc(state.id).set({[key]:now},{merge:true}).catch(e=>console.warn("save",e));
+  }
+  // 그날 운동을 다 하면 잠시 뒤 자동으로 접고, 다음 미완료 Day를 펼침
+  const d=state.days.find(x=>x.dayKey===dayKey);
+  if(d && dayDone(d)){
+    setTimeout(()=>{
+      const cur=$("day_"+dayKey); if(cur) cur.classList.add("collapsed");
+      const idx=state.days.findIndex(x=>x.dayKey===dayKey);
+      for(let i=idx+1;i<state.days.length;i++){ if(!dayDone(state.days[i])){ const ne=$("day_"+state.days[i].dayKey); if(ne) ne.classList.remove("collapsed"); break; } }
+    }, 1400);
   }
 }
 
@@ -180,12 +212,13 @@ function renderData(data){
       </div>
     </div>
     <div class="sec"><h2>🏋️ 나의 운동 프로그램</h2>
-      <p style="color:var(--dim);font-size:12.5px;margin:-6px 0 12px;">운동을 하나씩 하고 동그라미를 눌러 체크하세요. 그날 운동을 다 하면 자동으로 "오늘 운동 끝!"이 떠요 🎉</p>
+      <p style="color:var(--dim);font-size:12.5px;margin:-6px 0 12px;">오늘 할 운동만 펼쳐져 있어요. 다른 날은 제목을 <b>누르면 펼쳐져요</b>. 운동을 다 체크하면 자동으로 접히고 다음 날이 열려요 🎉</p>
       ${programHTML(data.program)}</div>
     <div class="sec"><h2>📋 진행 기록</h2>${recordsHTML(data.records)}
       <div class="disc">⚠️ 운동·건강 정보는 일반적인 참고용이며 의료적 조언이 아니에요. 통증이 있으면 무리하지 말고 ${esc(coach)} 코치님이나 전문의와 상담하세요.</div>
     </div>`;
   updateProgress();
+  applyDayCollapse();
 }
 function renderState(icon,title,desc){
   $("app").innerHTML=`<div class="state"><div class="big">${icon}</div><h2>${esc(title)}</h2><p>${esc(desc)}</p></div>`;
