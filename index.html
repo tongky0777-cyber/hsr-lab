@@ -216,6 +216,17 @@
   .edrow input{font-size:13px;padding:8px 9px;}
   .edrow .btn,.edday-h .btn{flex:0 0 auto;}
 
+  /* ===== 사진 그리드 (식단·피드백) ===== */
+  .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
+  .photo-item{background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .photo-item img{width:100%;height:120px;object-fit:cover;display:block;cursor:pointer;}
+  .photo-cap{font-size:11px;color:var(--text-dim);padding:6px 8px;}
+  input[type=file]{width:100%;background:var(--bg-soft);border:1px solid var(--line);color:var(--text);padding:9px;border-radius:10px;font-size:13px;}
+  .fbitem{background:var(--bg-soft);border-left:3px solid var(--brand-primary);border-radius:0 10px 10px 0;padding:11px 13px;margin-bottom:10px;}
+  .fbitem .t{font-size:13.5px;line-height:1.6;white-space:pre-wrap;}
+  .fbitem img{max-width:180px;border-radius:8px;margin-top:8px;display:block;cursor:pointer;}
+  .fbitem .m{font-size:11px;color:var(--text-mute);margin-bottom:5px;display:flex;align-items:center;gap:8px;}
+
   /* ===== 코치 앱 잠금(비밀번호) ===== */
   .lockscreen{position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,#12141a,#0b0d11);display:flex;align-items:center;justify-content:center;padding:20px;}
   .lockbox{width:100%;max-width:360px;text-align:center;}
@@ -227,19 +238,30 @@
   .lockbox .btn{width:100%;}
   #lockErr{color:var(--danger);font-size:13px;margin-top:10px;min-height:18px;}
 
-  /* ===== 인쇄(PDF 저장) ===== */
+  /* ===== 인쇄(PDF 저장) — 한 페이지에 한 주, Day는 박스로 ===== */
   @media print{
+    @page{ margin:12mm; }
     :root{--bg:#fff;--text:#111;}
     body{background:#fff;color:#111;}
-    .sidebar,.page-brand,.clientbar,.row-actions,.no-print{display:none !important;}
+    .sidebar,.page-brand,.clientbar,.row-actions,.no-print,#doneStatus{display:none !important;}
     .main{margin-left:0 !important;}
     .main,.content{padding:0;max-width:none;}
-    .card{box-shadow:none;border:1px solid #ddd;}
-    .result,.week-block,.out-body,.card{background:#fff !important;color:#111 !important;border-color:#ccc !important;}
-    .week-head{background:#f2f2f2 !important;color:#111 !important;}
-    table.prog th{color:#555 !important;background:#f7f7f7 !important;}
+    .card{box-shadow:none;border:0;}
+    .result,.card{background:#fff !important;color:#111 !important;border:0 !important;padding:0 !important;}
+    /* 한 주 = 한 페이지 */
+    .week-block{page-break-before:always;break-before:page;border:0 !important;padding:0 !important;margin:0 0 4px !important;}
+    .week-block:first-of-type{page-break-before:avoid;break-before:avoid;}
+    .week-head{background:#fff5ef !important;color:#111 !important;border:1px solid #ffd9c2 !important;border-radius:8px;padding:8px 12px !important;margin-bottom:10px;font-size:13px;}
+    /* Day 박스 그리드 */
+    .week-days{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .day-block{page-break-inside:avoid;break-inside:avoid;border:1px solid #ccc !important;border-radius:10px;padding:8px 10px !important;background:#fff !important;}
+    .day-block .daychip{color:#fff !important;background:#FF6A1A !important;}
+    table.prog{font-size:10px;}
+    table.prog th,table.prog td{padding:4px 6px;border-top:1px solid #e6e6e6 !important;}
+    table.prog th{color:#666 !important;background:#f7f7f7 !important;}
+    .pill{border:1px solid #ddd !important;color:#555 !important;background:#f4f4f4 !important;}
     .print-only{display:block !important;}
-    .daychip,.tag{color:#111 !important;background:#eee !important;}
+    .tag{color:#111 !important;background:#eee !important;}
     a{color:#111;}
   }
   .print-only{display:none;}
@@ -458,6 +480,7 @@ function copyText(txt,label){
 const TABS = [
   {id:"clients",  name:"고객 관리",     ic:"👥"},
   {id:"program",  name:"운동 프로그램",  ic:"🏋️"},
+  {id:"feedback", name:"피드백·식단",   ic:"📝"},
   {id:"content",  name:"인스타 콘텐츠", ic:"📱"},
   {id:"checkin",  name:"주간 체크인",   ic:"💬"},
   {id:"calendar", name:"콘텐츠 캘린더", ic:"📅"},
@@ -718,29 +741,61 @@ function generateProgram(){
   }
   const program={id:uid(), clientId:c.id, goal, level, freq, weeks, focus, equips, created:Date.now(), weeksArr};
   DB.programs[c.id]=program; saveDB(); cloudPublish(c.id);
-  progEdit=false; editDraft=null;
+  clearDayEdit();
   render();
   setTimeout(()=>{const el=document.getElementById("progResult"); if(el) el.scrollIntoView({behavior:"smooth"});},60);
   toast("프로그램이 생성되었습니다 ✓");
 }
 
+// 읽기용 한 Day
+function dayReadHTML(d, wi, di){
+  const exRows = d.exercises.map(e=>{
+    const s=e.sets!=null?e.sets:(d.sets+"세트"), r=e.reps!=null?e.reps:d.rep, rt=e.rest!=null?e.rest:d.rest;
+    return `<tr><td><span class="pill">${esc(e.part||"")}</span></td><td>${esc(e.name)}</td>
+    <td class="c">${esc(String(s))}</td><td class="c">${esc(r)}</td><td class="c">${esc(rt)}</td></tr>`;
+  }).join("");
+  const cardio = d.cardio ? `<tr><td><span class="pill">유산소</span></td><td>${d.cardio.moves.map(esc).join(" / ")}</td><td class="c" colspan="3">${d.cardio.rounds}라운드 · 각 40초 운동 / 20초 휴식</td></tr>`:"";
+  return `<div class="day-block" style="padding:6px 14px 12px;">
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 6px;">
+      <span class="daychip">DAY ${d.day}</span>
+      <span style="font-weight:800;font-size:13px;flex:1;">${d.parts.map(esc).join(" · ")}</span>
+      <button class="btn btn-ghost btn-sm no-print" onclick="startEditDay(${wi},${di})">✏️ 편집</button>
+    </div>
+    <table class="prog"><tr><th>부위</th><th>운동</th><th>세트</th><th>반복</th><th>휴식</th></tr>${exRows}${cardio}</table>
+  </div>`;
+}
+// 편집용 한 Day (그 자리에서 바로 편집)
+function dayEditHTML(dd){
+  const exRows = dd.exercises.map((e,ei)=>`
+    <div class="edrow" data-e="${ei}">
+      <input type="text" data-field="name" value="${esc(e.name)}" placeholder="운동" style="flex:2;"/>
+      <input type="text" data-field="sets" value="${esc(String(e.sets!=null?e.sets:''))}" placeholder="세트" style="flex:1;min-width:0;"/>
+      <input type="text" data-field="reps" value="${esc(e.reps!=null?e.reps:'')}" placeholder="반복" style="flex:1;min-width:0;"/>
+      <button class="btn btn-danger btn-sm" onclick="removeExD(${ei})">🗑</button>
+    </div>`).join("");
+  return `<div class="edday" id="dayEditForm" style="margin:8px 14px 14px;">
+    <div class="edday-h">
+      <span class="daychip">DAY ${dd.day}</span>
+      <input type="text" data-field="parts" value="${esc(dd.parts.join(' · '))}" placeholder="예) 하체 · 코어" style="flex:1;font-weight:700;"/>
+    </div>
+    ${exRows}
+    <button class="btn btn-ghost btn-sm" onclick="addExD()">+ 운동 추가</button>
+    <div class="row-actions" style="margin-top:12px;">
+      <button class="btn btn-primary btn-sm" onclick="saveDayEdit()">💾 이 Day 저장</button>
+      <button class="btn btn-ghost btn-sm" onclick="cancelDayEdit()">취소</button>
+      <button class="btn btn-danger btn-sm" style="margin-left:auto;" onclick="removeDayEdit()">이 Day 삭제</button>
+    </div>
+  </div>`;
+}
 function programResultHTML(p, c){
-  const rows = p.weeksArr.map(w=>{
-    const dayTables = w.days.map(d=>{
-      const exRows = d.exercises.map(e=>{
-        const s=e.sets!=null?e.sets:(d.sets+"세트"), r=e.reps!=null?e.reps:d.rep, rt=e.rest!=null?e.rest:d.rest;
-        return `<tr><td><span class="pill">${esc(e.part||"")}</span></td><td>${esc(e.name)}</td>
-        <td class="c">${esc(String(s))}</td><td class="c">${esc(r)}</td><td class="c">${esc(rt)}</td></tr>`;
-      }).join("");
-      const cardio = d.cardio ? `<tr><td><span class="pill">유산소</span></td><td>${d.cardio.moves.map(esc).join(" / ")}</td><td class="c" colspan="3">${d.cardio.rounds}라운드 · 각 40초 운동 / 20초 휴식</td></tr>`:"";
-      return `<div style="padding:6px 14px 12px;">
-        <div style="margin:10px 0 6px;font-weight:800;font-size:13px;"><span class="daychip">DAY ${d.day}</span> &nbsp;${d.parts.map(esc).join(" · ")}</div>
-        <table class="prog"><tr><th>부위</th><th>운동</th><th>세트</th><th>반복</th><th>휴식</th></tr>${exRows}${cardio}</table>
-      </div>`;
+  const rows = p.weeksArr.map((w,wi)=>{
+    const dayTables = w.days.map((d,di)=>{
+      return (editWi===wi && editDi===di) ? dayEditHTML(dayDraft) : dayReadHTML(d, wi, di);
     }).join("");
     return `<div class="week-block">
       <div class="week-head"><span class="tag">${esc(w.prog.tag)}</span> ${esc(w.prog.note)}</div>
-      ${dayTables}
+      <div class="week-days">${dayTables}</div>
+      <div style="padding:8px 14px 12px;"><button class="btn btn-ghost btn-sm no-print" onclick="addDayToWeek(${wi})">+ 이 주에 Day 추가</button></div>
     </div>`;
   }).join("");
 
@@ -750,12 +805,12 @@ function programResultHTML(p, c){
       <span class="pill">🎯 ${esc(p.goal)}</span><span class="pill">📈 ${esc(p.level)}</span>
       <span class="pill">📅 주 ${p.freq}회 · ${p.weeks}주</span><span class="pill">🏋️ ${p.equips.map(esc).join(", ")}</span>
       ${p.focus?`<span class="pill">✨ ${esc(p.focus)}</span>`:""}
+      <span class="pill" style="color:var(--brand-accent);border-color:rgba(183,228,0,.4);">✏️ 각 Day의 편집 버튼으로 그 자리에서 수정</span>
     </div>
     ${rows}
     <div class="row-actions no-print">
       <button class="btn btn-primary" onclick="window.print()">📄 PDF로 저장 / 인쇄</button>
       <button class="btn btn-lime" onclick="copyProgram()">📋 텍스트 복사 (전송용)</button>
-      <button class="btn btn-ghost" onclick="startEditProgram()">✏️ 편집</button>
       <button class="btn btn-ghost" onclick="if(confirm('현재 프로그램을 지우고 다시 만들까요?')){delete DB.programs['${c.id}'];saveDB();cloudPublish('${c.id}');render();}">↻ 다시 만들기</button>
     </div>
     <div class="disclaimer">⚠️ 본 프로그램은 일반적인 운동 정보 제공용이며 <b>의료적 조언이 아닙니다.</b> 통증·질환·부상 이력이 있으면 운동 전 전문의 또는 물리치료사와 상담하세요. 통증이 느껴지면 즉시 중단하세요.</div>
@@ -818,75 +873,51 @@ function copyProgram(){
   copyText(t,"프로그램 복사");
 }
 
-/* ---------- 프로그램 직접 편집 ---------- */
-let progEdit=false, editDraft=null;
-function startEditProgram(){
+/* ---------- 프로그램 직접 편집 (Day별 인라인) ---------- */
+let editWi=null, editDi=null, dayDraft=null;
+function clearDayEdit(){ editWi=null; editDi=null; dayDraft=null; }
+function startEditDay(wi,di){
   const c=DB.clients.find(x=>x.id===currentClientId); const p=c&&DB.programs[c.id]; if(!p) return;
-  editDraft=JSON.parse(JSON.stringify(p));
-  editDraft.weeksArr.forEach(w=>w.days.forEach(d=>{
-    d.exercises=d.exercises.map(e=>({part:e.part||"", name:e.name,
-      sets:(e.sets!=null?e.sets:d.sets+"세트"), reps:(e.reps!=null?e.reps:d.rep), rest:(e.rest!=null?e.rest:d.rest)}));
-    if(d.cardio){ d.exercises.push({part:"유산소", name:"유산소 · "+d.cardio.moves.join(" / "), sets:d.cardio.rounds+"라운드", reps:"각 40초 운동/20초 휴식", rest:""}); d.cardio=null; }
-  }));
-  progEdit=true; render();
+  const d=p.weeksArr[wi]&&p.weeksArr[wi].days[di]; if(!d) return;
+  dayDraft=JSON.parse(JSON.stringify(d));
+  dayDraft.exercises=(dayDraft.exercises||[]).map(e=>({part:e.part||"", name:e.name,
+    sets:(e.sets!=null?e.sets:d.sets+"세트"), reps:(e.reps!=null?e.reps:d.rep), rest:(e.rest!=null?e.rest:d.rest)}));
+  if(dayDraft.cardio){ dayDraft.exercises.push({part:"유산소", name:"유산소 · "+dayDraft.cardio.moves.join(" / "), sets:dayDraft.cardio.rounds+"라운드", reps:"각 40초 운동/20초 휴식", rest:""}); dayDraft.cardio=null; }
+  editWi=wi; editDi=di; render();
+  setTimeout(()=>{const f=document.getElementById("dayEditForm"); if(f) f.scrollIntoView({behavior:"smooth",block:"center"});},60);
 }
-function cancelEditProgram(){ progEdit=false; editDraft=null; render(); }
-function collectEdits(){
-  if(!editDraft) return;
-  document.querySelectorAll('#progEditForm [data-field]').forEach(inp=>{
-    const w=+inp.dataset.w, f=inp.dataset.field;
-    if(f==="note"){ if(editDraft.weeksArr[w]) editDraft.weeksArr[w].prog.note=inp.value; return; }
-    const d=+inp.dataset.d; const day=editDraft.weeksArr[w]&&editDraft.weeksArr[w].days[d]; if(!day) return;
-    if(f==="parts"){ day.parts=inp.value.split(/[·,]/).map(s=>s.trim()).filter(Boolean); return; }
-    const e=+inp.dataset.e; const ex=day.exercises[e]; if(!ex) return; ex[f]=inp.value;
+function collectDayEdits(){
+  const form=document.getElementById("dayEditForm"); if(!form||!dayDraft) return;
+  const pt=form.querySelector('[data-field="parts"]'); if(pt) dayDraft.parts=pt.value.split(/[·,]/).map(s=>s.trim()).filter(Boolean);
+  form.querySelectorAll('.edrow').forEach((row,ei)=>{
+    const ex=dayDraft.exercises[ei]; if(!ex) return;
+    const n=row.querySelector('[data-field="name"]'), s=row.querySelector('[data-field="sets"]'), r=row.querySelector('[data-field="reps"]');
+    if(n) ex.name=n.value; if(s) ex.sets=s.value; if(r) ex.reps=r.value;
   });
 }
-function addEx(w,d){ collectEdits(); editDraft.weeksArr[w].days[d].exercises.push({part:"",name:"새 운동",sets:"3세트",reps:"12회",rest:"60초"}); render(); }
-function removeEx(w,d,e){ collectEdits(); editDraft.weeksArr[w].days[d].exercises.splice(e,1); render(); }
-function addDay(w){ collectEdits(); const n=editDraft.weeksArr[w].days.length+1; editDraft.weeksArr[w].days.push({day:n,parts:["새 요일"],sets:3,rep:"12회",rest:"60초",cardio:null,exercises:[{part:"",name:"새 운동",sets:"3세트",reps:"12회",rest:"60초"}]}); render(); }
-function removeDay(w,d){ if(!confirm("이 Day를 삭제할까요?")) return; collectEdits(); editDraft.weeksArr[w].days.splice(d,1); editDraft.weeksArr[w].days.forEach((dd,i)=>dd.day=i+1); render(); }
-function saveProgramEdit(){
-  collectEdits();
-  const c=DB.clients.find(x=>x.id===currentClientId); if(!c){progEdit=false;editDraft=null;render();return;}
-  DB.programs[c.id]=editDraft; saveDB(); cloudPublish(c.id);
-  progEdit=false; editDraft=null; render(); toast("프로그램이 수정되었습니다 ✓");
+function addExD(){ collectDayEdits(); dayDraft.exercises.push({part:"",name:"새 운동",sets:"3세트",reps:"12회",rest:"60초"}); render(); }
+function removeExD(ei){ collectDayEdits(); dayDraft.exercises.splice(ei,1); render(); }
+function cancelDayEdit(){ clearDayEdit(); render(); }
+function saveDayEdit(){
+  collectDayEdits();
+  const c=DB.clients.find(x=>x.id===currentClientId); const p=c&&DB.programs[c.id];
+  if(!p){ clearDayEdit(); render(); return; }
+  p.weeksArr[editWi].days[editDi]=dayDraft;
+  saveDB(); cloudPublish(c.id); clearDayEdit(); render(); toast("저장되었습니다 ✓");
 }
-function editProgramHTML(c){
-  const p=editDraft;
-  const weeks=p.weeksArr.map((w,wi)=>{
-    const days=w.days.map((d,di)=>{
-      const exRows=d.exercises.map((e,ei)=>`
-        <div class="edrow">
-          <input type="text" data-w="${wi}" data-d="${di}" data-e="${ei}" data-field="name" value="${esc(e.name)}" placeholder="운동" style="flex:2;"/>
-          <input type="text" data-w="${wi}" data-d="${di}" data-e="${ei}" data-field="sets" value="${esc(String(e.sets!=null?e.sets:''))}" placeholder="세트" style="flex:1;min-width:0;"/>
-          <input type="text" data-w="${wi}" data-d="${di}" data-e="${ei}" data-field="reps" value="${esc(e.reps!=null?e.reps:'')}" placeholder="반복" style="flex:1;min-width:0;"/>
-          <button class="btn btn-danger btn-sm" onclick="removeEx(${wi},${di},${ei})">🗑</button>
-        </div>`).join("");
-      return `<div class="edday">
-        <div class="edday-h">
-          <input type="text" data-w="${wi}" data-d="${di}" data-field="parts" value="${esc(d.parts.join(' · '))}" placeholder="예) 하체 · 코어" style="flex:1;font-weight:700;"/>
-          <button class="btn btn-ghost btn-sm" onclick="removeDay(${wi},${di})">Day 삭제</button>
-        </div>
-        ${exRows}
-        <button class="btn btn-ghost btn-sm" onclick="addEx(${wi},${di})">+ 운동 추가</button>
-      </div>`;
-    }).join("");
-    return `<div class="edweek">
-      <div class="edweek-h"><span class="tag">${esc(w.prog.tag)}</span>
-        <input type="text" data-w="${wi}" data-field="note" value="${esc(w.prog.note)}" placeholder="주차 메모" style="flex:1;"/></div>
-      ${days}
-      <button class="btn btn-ghost btn-sm" onclick="addDay(${wi})">+ Day 추가</button>
-    </div>`;
-  }).join("");
-  return `<div class="result" id="progEditForm">
-    <div style="font-weight:800;font-size:15px;margin-bottom:6px;">✏️ 프로그램 편집 — ${esc(c.name)}님</div>
-    <p style="color:var(--text-dim);font-size:12.5px;margin-bottom:14px;">운동 이름·세트·반복을 직접 고치고, 운동/Day를 추가·삭제할 수 있어요. <b>저장</b>하면 고객 포털에도 바로 반영돼요.</p>
-    ${weeks}
-    <div class="row-actions">
-      <button class="btn btn-primary" onclick="saveProgramEdit()">💾 저장</button>
-      <button class="btn btn-ghost" onclick="cancelEditProgram()">취소</button>
-    </div>
-  </div>`;
+function removeDayEdit(){
+  if(!confirm("이 Day를 삭제할까요?")) return;
+  const c=DB.clients.find(x=>x.id===currentClientId); const p=c&&DB.programs[c.id];
+  if(!p){ clearDayEdit(); render(); return; }
+  p.weeksArr[editWi].days.splice(editDi,1);
+  p.weeksArr[editWi].days.forEach((dd,i)=>dd.day=i+1);
+  saveDB(); cloudPublish(c.id); clearDayEdit(); render(); toast("Day 삭제됨");
+}
+function addDayToWeek(wi){
+  const c=DB.clients.find(x=>x.id===currentClientId); const p=c&&DB.programs[c.id]; if(!p) return;
+  const n=p.weeksArr[wi].days.length+1;
+  p.weeksArr[wi].days.push({day:n,parts:["새 요일"],sets:3,rep:"12회",rest:"60초",cardio:null,exercises:[{part:"",name:"새 운동",sets:"3세트",reps:"12회",rest:"60초"}]});
+  saveDB(); cloudPublish(c.id); startEditDay(wi, p.weeksArr[wi].days.length-1);
 }
 
 function viewProgram(){
@@ -899,11 +930,6 @@ function viewProgram(){
   if(!currentClientId) currentClientId=DB.clients[0].id;
   const c = DB.clients.find(x=>x.id===currentClientId);
   const existing = DB.programs[c.id];
-  if(progEdit && editDraft && existing){
-    return `<h1 class="page-title">운동 프로그램 편집</h1>
-      <p class="page-sub">${esc(c.name)}님 프로그램을 직접 수정해요. (편집 중에는 고객이 바뀌지 않아요)</p>
-      ${editProgramHTML(c)}`;
-  }
   const equipList=["맨몸","덤벨","바벨","머신"];
   window._equips = window._equips || ["맨몸","덤벨"];
   const eqChips = equipList.map(e=>`<span class="chip ${window._equips.includes(e)?'on':''}" onclick="toggleEquip('${e}')">${e}</span>`).join("");
@@ -1242,6 +1268,98 @@ function viewFaq(){
     </div>`;
 }
 
+/* =========================================================
+   7) 피드백 · 식단 (사진: 압축해서 DB에 저장 — 별도 결제 불필요)
+   ========================================================= */
+function compressImage(file, maxW, cb){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.width, h=img.height;
+      if(w>maxW){ h=Math.round(h*maxW/w); w=maxW; }
+      const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+      cv.getContext("2d").drawImage(img,0,0,w,h);
+      cb(cv.toDataURL("image/jpeg",0.7));
+    };
+    img.onerror=()=>cb(null);
+    img.src=e.target.result;
+  };
+  reader.onerror=()=>cb(null);
+  reader.readAsDataURL(file);
+}
+function fmtDay(ts){ if(!ts) return ""; const d=new Date(ts); return `${d.getMonth()+1}.${d.getDate()}`; }
+
+function viewFeedback(){
+  if(DB.clients.length===0){
+    return `<h1 class="page-title">피드백 · 식단</h1><p class="page-sub">회원에게 피드백을 보내고, 회원이 올린 식단 사진을 확인해요.</p>
+    <div class="card"><div class="empty"><div class="big">📝</div>먼저 <b>고객 관리</b>에서 고객을 등록해 주세요.</div>
+    <div class="row-actions" style="justify-content:center"><button class="btn btn-primary" onclick="go('clients')">고객 등록하러 가기</button></div></div>`;
+  }
+  if(!currentClientId) currentClientId=DB.clients[0].id;
+  const c=DB.clients.find(x=>x.id===currentClientId);
+  return `<h1 class="page-title">피드백 · 식단</h1>
+    <p class="page-sub">회원이 올린 식단 사진을 보고, PT 후 피드백(사진 첨부 가능)을 보내요. 고객 포털에서 회원이 바로 봐요.</p>
+    ${clientBarHTML()}
+    <div class="card">
+      <h3>🍽️ ${esc(c.name)}님이 올린 식단 사진</h3>
+      <div id="dietView"><p style="color:var(--text-dim);font-size:13px;">불러오는 중…</p></div>
+    </div>
+    <div class="card">
+      <h3>📝 피드백 보내기</h3>
+      <textarea id="fbText" placeholder="예) 오늘 스쿼트 폼 정말 좋아졌어요! 다음엔 무게 살짝 올려볼게요 💪"></textarea>
+      <div style="margin-top:10px;"><label class="fld">사진 첨부 (선택 · 자세 교정 사진 등)</label><input type="file" id="fbPhoto" accept="image/*" /></div>
+      <div class="row-actions"><button class="btn btn-primary" onclick="sendFeedback()">피드백 보내기</button></div>
+      <div id="fbList" style="margin-top:8px;"></div>
+      <div class="disclaimer">⚠️ 건강·부상·식단 피드백은 일반적 조언이며 의료행위가 아니에요. 통증·질환은 전문의 상담을 함께 안내하세요.</div>
+    </div>`;
+}
+async function loadDiet(){
+  const el=document.getElementById("dietView"); if(!el) return;
+  const c=DB.clients.find(x=>x.id===currentClientId); if(!c) return;
+  if(!cloudOn){ el.innerHTML=`<p style="color:var(--text-mute);font-size:13px;">클라우드(로그인)가 켜지면 회원 식단 사진을 볼 수 있어요.</p>`; return; }
+  try{
+    const qs=await cloud.collection("diet").doc(c.id).collection("photos").orderBy("ts","desc").get();
+    if(qs.empty){ el.innerHTML=`<p style="color:var(--text-mute);font-size:13px;">아직 올라온 식단 사진이 없어요. (회원이 포털 '식단'에서 올릴 수 있어요)</p>`; return; }
+    let h='<div class="photo-grid">';
+    qs.forEach(s=>{ const d=s.data(); h+=`<div class="photo-item"><img src="${d.img}" onclick="window.open().document.write('<img src=\\''+this.src+'\\' style=max-width:100%>')"/><div class="photo-cap">${fmtDay(d.ts)}${d.memo?" · "+esc(d.memo):""}</div></div>`; });
+    el.innerHTML=h+'</div>';
+  }catch(e){ console.warn(e); el.innerHTML=`<p style="color:var(--text-mute);font-size:12px;">불러오지 못했어요.</p>`; }
+}
+async function loadFeedback(){
+  const el=document.getElementById("fbList"); if(!el) return;
+  const c=DB.clients.find(x=>x.id===currentClientId); if(!c) return;
+  if(!cloudOn){ el.innerHTML=""; return; }
+  try{
+    const qs=await cloud.collection("feedback").doc(c.id).collection("items").orderBy("ts","desc").get();
+    el.innerHTML = qs.empty ? `<p style="color:var(--text-mute);font-size:12.5px;">아직 보낸 피드백이 없어요.</p>`
+      : qs.docs.map(s=>{ const d=s.data(); return `<div class="fbitem">
+          <div class="m"><b style="color:var(--brand-primary)">${fmtDay(d.ts)}</b>
+            <button class="btn btn-danger btn-sm" style="margin-left:auto;padding:2px 8px;" onclick="delFeedback('${c.id}','${s.id}')">삭제</button></div>
+          ${d.text?`<div class="t">${esc(d.text)}</div>`:""}
+          ${d.img?`<img src="${d.img}" onclick="window.open().document.write('<img src=\\''+this.src+'\\' style=max-width:100%>')"/>`:""}
+        </div>`; }).join("");
+  }catch(e){ console.warn(e); }
+}
+function sendFeedback(){
+  const c=DB.clients.find(x=>x.id===currentClientId); if(!c) return;
+  if(!cloudOn){ toast("로그인(클라우드)이 필요해요"); return; }
+  const text=document.getElementById("fbText").value.trim();
+  const file=document.getElementById("fbPhoto").files[0];
+  if(!text && !file){ toast("내용이나 사진을 넣어주세요"); return; }
+  const doSave=(img)=>{
+    cloud.collection("feedback").doc(c.id).collection("items").add({ts:Date.now(), text, img:img||null})
+      .then(()=>{ document.getElementById("fbText").value=""; const fp=document.getElementById("fbPhoto"); if(fp) fp.value=""; loadFeedback(); toast("피드백 전송 ✓"); })
+      .catch(e=>{ console.warn(e); toast("전송 실패"); });
+  };
+  toast("보내는 중…");
+  if(file) compressImage(file,1000,doSave); else doSave(null);
+}
+function delFeedback(cid, id){
+  if(!confirm("이 피드백을 삭제할까요?")) return;
+  cloud.collection("feedback").doc(cid).collection("items").doc(id).delete().then(()=>loadFeedback()).catch(()=>{});
+}
+
 /* ---------- 라우터 ---------- */
 function render(){
   const el=document.getElementById("content");
@@ -1251,8 +1369,10 @@ function render(){
   else if(activeTab==="checkin") el.innerHTML=viewCheckin();
   else if(activeTab==="calendar") el.innerHTML=viewCalendar();
   else if(activeTab==="faq") el.innerHTML=viewFaq();
+  else if(activeTab==="feedback") el.innerHTML=viewFeedback();
   renderNav();
   if(activeTab==="faq") renderFaqLog();
+  if(activeTab==="feedback"){ setTimeout(()=>{ loadDiet(); loadFeedback(); },50); }
   stopDoneWatch();
   if(activeTab==="program") setTimeout(watchDoneStatus,50);
 }
