@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>황서린 코치의 퍼스널 트레이닝 랩</title>
+<style>
+  /* ===== 브랜드 색/토큰 (나중에 로고·색 교체 쉽게 변수화) ===== */
+  :root{
+    --brand-primary:#FF6A1A;      /* 오렌지 */
+    --brand-primary-dark:#E2540A;
+    --brand-accent:#B7E400;       /* 라임 */
+    --brand-accent-dark:#93B900;
+    --brand-name:"황서린";
+
+    --bg:#0f1115;
+    --bg-soft:#171a21;
+    --card:#1d212b;
+    --card-2:#232836;
+    --line:#2c3240;
+    --text:#f2f4f8;
+    --text-dim:#9aa4b5;
+    --text-mute:#6b7484;
+    --danger:#ff5470;
+    --ok:#37d67a;
+
+    --radius:16px;
+    --radius-sm:10px;
+    --shadow:0 8px 30px rgba(0,0,0,.35);
+    --sidebar-w:230px;
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",'Segoe UI',Roboto,sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);-webkit-text-size-adjust:100%;}
+  body{min-height:100vh;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+  a{color:var(--brand-accent);}
+
+  /* ===== 레이아웃 ===== */
+  /* 레이아웃 */
+  .app{display:flex;min-height:100vh;}
+  .sidebar{
+    width:var(--sidebar-w);flex:0 0 var(--sidebar-w);
+    background:linear-gradient(180deg,#12141a 0%,#0d0f14 100%);
+    border-right:1px solid var(--line);
+    display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:50;
+  }
+  .sidebar-title{padding:20px 18px 8px;font-size:10.5px;letter-spacing:1.5px;color:var(--text-mute);font-weight:800;}
+
+  /* 본문 상단 브랜드 헤더 — 사이드바 바로 오른쪽, 본문이 시작하는 곳 */
+  .page-brand{
+    display:flex;align-items:center;gap:13px;padding:18px 32px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(255,106,26,.06),transparent);
+  }
+  .pb-logo{
+    width:46px;height:46px;border-radius:13px;flex:0 0 46px;
+    background:linear-gradient(135deg,var(--brand-primary),var(--brand-accent));
+    display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(255,106,26,.42);
+  }
+  .pb-logo svg{width:26px;height:26px;}
+  .pb-txt .brand-pre{font-size:12px;color:var(--text-dim);font-weight:600;letter-spacing:.3px;display:block;margin-bottom:2px;}
+  .pb-txt .brand-name{
+    font-size:20px;font-weight:900;letter-spacing:-.6px;line-height:1.15;word-break:keep-all;
+    background:linear-gradient(92deg,var(--brand-primary),var(--brand-accent));
+    -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+  }
+  .nav{padding:8px;display:flex;flex-direction:column;gap:4px;flex:1;overflow:auto;}
+  .nav button{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+    background:transparent;border:0;color:var(--text-dim);
+    padding:12px 14px;border-radius:12px;font-size:14.5px;font-weight:600;transition:.15s;
+  }
+  .nav button .ic{font-size:18px;width:22px;text-align:center;}
+  .nav button:hover{background:var(--card);color:var(--text);}
+  .nav button.active{background:linear-gradient(135deg,rgba(255,106,26,.18),rgba(183,228,0,.12));color:#fff;box-shadow:inset 0 0 0 1px rgba(255,106,26,.35);}
+  .nav .cnt{margin-left:auto;font-size:11px;background:var(--card-2);color:var(--text-dim);padding:1px 8px;border-radius:20px;}
+  .sidebar-foot{padding:14px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--text-mute);}
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;margin-left:var(--sidebar-w);}
+  .content{padding:28px 32px 90px;max-width:1000px;width:100%;margin:0 auto;}
+
+  h1.page-title{font-size:24px;margin:0 0 4px;letter-spacing:-.5px;}
+  .page-sub{color:var(--text-dim);font-size:13.5px;margin:0 0 22px;}
+
+  /* ===== 카드/폼 공통 ===== */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+  .card + .card{margin-top:18px;}
+  .card h3{margin:0 0 14px;font-size:15px;display:flex;align-items:center;gap:8px;}
+  .grid{display:grid;gap:14px;}
+  .g2{grid-template-columns:1fr 1fr;}
+  .g3{grid-template-columns:1fr 1fr 1fr;}
+  label.fld{display:block;font-size:12.5px;color:var(--text-dim);margin:0 0 6px;font-weight:600;}
+  input[type=text],input[type=number],select,textarea{
+    width:100%;background:var(--bg-soft);border:1px solid var(--line);color:var(--text);
+    padding:11px 12px;border-radius:var(--radius-sm);font-size:14px;outline:none;transition:.15s;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--brand-primary);box-shadow:0 0 0 3px rgba(255,106,26,.15);}
+  textarea{resize:vertical;min-height:70px;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    padding:8px 13px;border-radius:20px;border:1px solid var(--line);background:var(--bg-soft);
+    color:var(--text-dim);font-size:13px;font-weight:600;transition:.15s;user-select:none;
+  }
+  .chip.on{background:var(--brand-primary);border-color:var(--brand-primary);color:#fff;}
+  .chip.on.lime{background:var(--brand-accent);border-color:var(--brand-accent);color:#14210a;}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    border:0;border-radius:12px;padding:12px 18px;font-size:14px;font-weight:700;transition:.15s;
+  }
+  .btn-primary{background:linear-gradient(135deg,var(--brand-primary),var(--brand-primary-dark));color:#fff;box-shadow:0 6px 18px rgba(255,106,26,.3);}
+  .btn-primary:hover{filter:brightness(1.06);}
+  .btn-lime{background:var(--brand-accent);color:#14210a;}
+  .btn-ghost{background:var(--card-2);color:var(--text);border:1px solid var(--line);}
+  .btn-ghost:hover{background:var(--line);}
+  .btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger);}
+  .btn-sm{padding:8px 12px;font-size:12.5px;border-radius:9px;}
+  .btn-block{width:100%;}
+  .row-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+
+  .empty{text-align:center;padding:40px 16px;color:var(--text-mute);}
+  .empty .big{font-size:34px;margin-bottom:10px;}
+
+  /* 고객 목록 */
+  .client-list{display:grid;gap:10px;}
+  .client-item{display:flex;align-items:center;gap:14px;background:var(--bg-soft);border:1px solid var(--line);border-radius:12px;padding:13px 14px;}
+  .avatar{width:40px;height:40px;border-radius:50%;flex:0 0 40px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#111;background:linear-gradient(135deg,var(--brand-accent),var(--brand-primary));}
+  .client-meta b{font-size:14.5px;}
+  .client-meta small{color:var(--text-dim);font-size:12.5px;margin-left:10px;}
+  .client-item .sp{margin-left:auto;display:flex;gap:8px;}
+
+  .pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;background:var(--card-2);color:var(--text-dim);border:1px solid var(--line);}
+
+  /* 선택 바 (공유 고객) */
+  .clientbar{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(255,106,26,.1),rgba(183,228,0,.08));border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:18px;}
+  .clientbar .avatar{width:34px;height:34px;flex-basis:34px;font-size:13px;}
+  .clientbar select{max-width:260px;}
+
+  /* 결과 출력 */
+  .result{background:var(--bg-soft);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px;}
+  .week-block{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:14px;}
+  .week-head{background:var(--card-2);padding:11px 14px;font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:10px;}
+  .week-head .tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(183,228,0,.18);color:var(--brand-accent);}
+  table.prog{width:100%;border-collapse:collapse;font-size:13px;}
+  table.prog th,table.prog td{padding:9px 12px;text-align:left;border-top:1px solid var(--line);}
+  table.prog th{color:var(--text-dim);font-weight:600;font-size:11.5px;background:rgba(255,255,255,.02);}
+  table.prog td.c{text-align:center;white-space:nowrap;}
+  .daychip{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--brand-primary);color:#fff;font-weight:700;}
+
+  .out-block{margin-bottom:16px;}
+  .out-block .lab{font-size:12px;font-weight:800;color:var(--brand-accent);letter-spacing:.5px;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+  .out-body{background:var(--card-2);border:1px solid var(--line);border-radius:10px;padding:13px 14px;font-size:14px;line-height:1.7;white-space:pre-wrap;position:relative;}
+  .copybtn{position:absolute;top:8px;right:8px;}
+  .hashline{color:var(--brand-accent);font-weight:600;}
+
+  .disclaimer{margin-top:16px;font-size:11.5px;color:var(--text-mute);background:rgba(255,84,112,.07);border:1px solid rgba(255,84,112,.25);border-radius:10px;padding:11px 13px;line-height:1.55;}
+
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--brand-accent);color:#14210a;font-weight:800;padding:11px 20px;border-radius:30px;font-size:13.5px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:99;}
+  .toast.show{opacity:1;bottom:96px;}
+
+  /* 모달 */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:80;padding:16px;}
+  .modal-bg.show{display:flex;}
+  .modal{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;width:100%;max-width:440px;box-shadow:var(--shadow);max-height:90vh;overflow:auto;}
+  .modal h3{margin:0 0 16px;font-size:17px;}
+
+  .hidden{display:none !important;}
+
+  /* ===== 모바일: 사이드바를 가로 스크롤 탭으로, 브랜드 헤더는 본문 위 ===== */
+  @media (max-width:820px){
+    .app{flex-direction:column;}
+    .sidebar{position:static;width:auto;flex:none;height:auto;flex-direction:row;
+      border-right:0;border-bottom:1px solid var(--line);overflow-x:auto;}
+    .sidebar-title,.sidebar-foot{display:none;}
+    .nav{flex-direction:row;padding:8px;gap:6px;overflow:visible;}
+    .nav button{white-space:nowrap;padding:9px 14px;}
+    .main{margin-left:0;}
+    .page-brand{padding:14px 16px;}
+    .pb-logo{width:40px;height:40px;flex-basis:40px;}
+    .pb-logo svg{width:23px;height:23px;}
+    .pb-txt .brand-name{font-size:17px;}
+    .content{padding:18px 15px 40px;}
+    .g2,.g3{grid-template-columns:1fr;}
+    .clientbar select{max-width:none;flex:1;}
+  }
+
+  /* ===== 콘텐츠 캘린더 ===== */
+  table.cal{width:100%;border-collapse:collapse;font-size:13px;}
+  table.cal th,table.cal td{padding:9px 11px;border-top:1px solid var(--line);text-align:left;vertical-align:top;}
+  table.cal th{color:var(--text-dim);font-size:11.5px;background:rgba(255,255,255,.02);}
+  table.cal td.day{font-weight:800;color:var(--brand-accent);white-space:nowrap;}
+  .fmt{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--card-2);color:var(--text-dim);border:1px solid var(--line);white-space:nowrap;}
+  .cal-use{font-size:11px;color:var(--brand-primary);cursor:pointer;background:none;border:0;padding:0;text-decoration:underline;white-space:nowrap;}
+
+  /* ===== FAQ 챗봇 ===== */
+  .chat{display:flex;flex-direction:column;gap:10px;max-height:52vh;overflow-y:auto;padding:6px 2px;}
+  .msg{max-width:84%;padding:11px 14px;border-radius:14px;font-size:14px;line-height:1.6;white-space:pre-wrap;}
+  .msg.bot{align-self:flex-start;background:var(--card-2);border:1px solid var(--line);border-bottom-left-radius:4px;}
+  .msg.me{align-self:flex-end;background:linear-gradient(135deg,var(--brand-primary),var(--brand-primary-dark));color:#fff;border-bottom-right-radius:4px;}
+  .chat-in{display:flex;gap:8px;margin-top:12px;}
+  .chat-in input{flex:1;}
+  .qbtns{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;}
+  .qbtn{font-size:12.5px;padding:7px 12px;border-radius:18px;border:1px solid var(--line);background:var(--bg-soft);color:var(--text-dim);}
+  .qbtn:hover{border-color:var(--brand-primary);color:#fff;}
+
+  /* ===== 코치 앱 잠금(비밀번호) ===== */
+  .lockscreen{position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,#12141a,#0b0d11);display:flex;align-items:center;justify-content:center;padding:20px;}
+  .lockbox{width:100%;max-width:360px;text-align:center;}
+  .lock-logo{width:60px;height:60px;border-radius:16px;margin:0 auto 18px;background:linear-gradient(135deg,var(--brand-primary),var(--brand-accent));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(255,106,26,.45);}
+  .lock-logo svg{width:34px;height:34px;}
+  .lockbox h2{font-size:19px;font-weight:900;letter-spacing:-.4px;margin-bottom:6px;}
+  .lockbox p{color:var(--text-dim);font-size:13.5px;margin-bottom:20px;}
+  .lockbox input{width:100%;text-align:center;font-size:16px;padding:13px;margin-bottom:12px;}
+  .lockbox .btn{width:100%;}
+  #lockErr{color:var(--danger);font-size:13px;margin-top:10px;min-height:18px;}
+
+  /* ===== 인쇄(PDF 저장) ===== */
+  @media print{
+    :root{--bg:#fff;--text:#111;}
+    body{background:#fff;color:#111;}
+    .sidebar,.page-brand,.clientbar,.row-actions,.no-print{display:none !important;}
+    .main{margin-left:0 !important;}
+    .main,.content{padding:0;max-width:none;}
+    .card{box-shadow:none;border:1px solid #ddd;}
+    .result,.week-block,.out-body,.card{background:#fff !important;color:#111 !important;border-color:#ccc !important;}
+    .week-head{background:#f2f2f2 !important;color:#111 !important;}
+    table.prog th{color:#555 !important;background:#f7f7f7 !important;}
+    .print-only{display:block !important;}
+    .daychip,.tag{color:#111 !important;background:#eee !important;}
+    a{color:#111;}
+  }
+  .print-only{display:none;}
+  .print-head{margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid var(--brand-primary);}
+  .print-head b{font-size:20px;}
+</style>
+<!-- Firebase (선택): 고객 포털 공유용. 설정 안 하면 이 브라우저에만 저장돼요. -->
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-title">메뉴</div>
+    <nav class="nav" id="navDesktop"></nav>
+    <div class="sidebar-foot"><span id="footUser"></span>v1.0 &nbsp;<a href="#" id="logoutLink" onclick="logout();return false;" style="color:var(--brand-accent);display:none;">로그아웃</a></div>
+  </aside>
+  <div class="main">
+    <!-- 본문 상단 브랜드 헤더 (사이드바 오른쪽, 본문 시작점) -->
+    <header class="page-brand">
+      <div class="pb-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" fill="#14210a"/></svg>
+      </div>
+      <div class="pb-txt">
+        <span class="brand-pre" id="brandPre">황서린 코치의</span>
+        <b class="brand-name" id="brandName">퍼스널 트레이닝 랩</b>
+      </div>
+    </header>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<!-- 고객 등록/수정 모달 -->
+<div class="modal-bg" id="clientModal">
+  <div class="modal">
+    <h3 id="cmTitle">고객 등록</h3>
+    <input type="hidden" id="cmId" />
+    <div class="grid g2">
+      <div><label class="fld">이름 *</label><input type="text" id="cmName" placeholder="예) 김지은" /></div>
+      <div><label class="fld">나이</label><input type="number" id="cmAge" placeholder="예) 32" /></div>
+    </div>
+    <div class="grid g2" style="margin-top:12px;">
+      <div>
+        <label class="fld">성별</label>
+        <select id="cmSex"><option value="여성">여성</option><option value="남성">남성</option><option value="기타">기타</option></select>
+      </div>
+      <div>
+        <label class="fld">주 목표</label>
+        <select id="cmGoal">
+          <option value="근성장">근성장 (근육/볼륨업)</option>
+          <option value="다이어트">다이어트 (체지방 감소)</option>
+          <option value="체형교정">체형교정 / 자세</option>
+          <option value="근력">근력 향상</option>
+          <option value="기초체력">기초체력 / 입문</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:12px;">
+      <label class="fld">운동 수준</label>
+      <select id="cmLevel"><option value="초급">초급 (0~6개월)</option><option value="중급">중급 (6개월~2년)</option><option value="고급">고급 (2년+)</option></select>
+    </div>
+    <div style="margin-top:12px;">
+      <label class="fld">메모 (부상·특이사항 등)</label>
+      <textarea id="cmNote" placeholder="예) 오른쪽 어깨 통증 이력, 주 3회 가능"></textarea>
+    </div>
+    <div class="row-actions">
+      <button class="btn btn-primary" onclick="saveClient()">저장</button>
+      <button class="btn btn-ghost" onclick="closeModal()">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- 진행 기록 모달 -->
+<div class="modal-bg" id="recModal">
+  <div class="modal">
+    <h3 id="rcTitle">진행 기록</h3>
+    <input type="hidden" id="rcClientId" />
+    <p style="color:var(--text-dim);font-size:12.5px;margin:-6px 0 12px;">여기 남긴 기록은 고객 포털에서 고객이 볼 수 있어요.</p>
+    <div class="grid g2">
+      <div><label class="fld">날짜/시점</label><input type="text" id="rcDate" placeholder="예) 3주차 / 3월 2일" /></div>
+      <div><label class="fld">항목 (선택)</label><input type="text" id="rcTag" placeholder="예) 인바디 / 피드백" /></div>
+    </div>
+    <div style="margin-top:12px;"><label class="fld">내용</label>
+      <textarea id="rcText" placeholder="예) 체중 -1.2kg, 스쿼트 40kg 성공! 자세 많이 좋아졌어요"></textarea></div>
+    <div class="row-actions">
+      <button class="btn btn-primary" onclick="addRecord()">기록 추가</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('recModal').classList.remove('show')">닫기</button>
+    </div>
+    <div id="rcList"></div>
+  </div>
+</div>
+
+<!-- 로그인 화면 (정식 로그인 · Firebase 인증) -->
+<div class="lockscreen" id="lockScreen" style="display:none;">
+  <div class="lockbox">
+    <div class="lock-logo"><svg viewBox="0 0 24 24"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" fill="#14210a"/></svg></div>
+    <h2 id="lockTitle">퍼스널 트레이닝 랩</h2>
+    <p>코치 전용 화면이에요. 로그인해 주세요.</p>
+    <input type="email" id="loginEmail" placeholder="이메일" autocomplete="username" />
+    <input type="password" id="loginPw" placeholder="비밀번호" autocomplete="current-password" />
+    <button class="btn btn-primary" onclick="tryLogin()">로그인</button>
+    <div id="lockErr"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   황서린 코치 AI 트레이닝 스튜디오 — v1.0
+   단일 파일 / 브라우저(localStorage) 저장 / 오프라인 동작
+   ========================================================= */
+
+const STORE_KEY = "hsr_studio_v1";
+const COACH = "황서린";                 // 코치 이름 (앱 곳곳에 반영)
+const BRAND_NAME = "퍼스널 트레이닝 랩";  // 헤더 브랜드명 — 여기만 바꾸면 전체 반영
+
+/* ---------- Firebase (선택) ----------
+   아래 값을 본인 Firebase 프로젝트 설정으로 채우면 '고객 포털' 공유가 켜집니다.
+   비워두면 이 브라우저(localStorage)로만 동작해요. 설정법: Firebase-설정-가이드.html */
+const FIREBASE_CONFIG = window.FIREBASE_CONFIG || { apiKey:"" };
+let cloud=null, cloudOn=false, auth=null, currentUser=null;
+function initCloud(){
+  try{
+    if(FIREBASE_CONFIG.apiKey && window.firebase){
+      firebase.initializeApp(FIREBASE_CONFIG);
+      cloud=firebase.firestore(); cloudOn=true;
+      if(firebase.auth) auth=firebase.auth();
+    }
+  }catch(e){ console.warn("Firebase init 실패:", e); cloudOn=false; }
+}
+function cloudPublish(clientId){
+  if(!cloudOn||!clientId) return;
+  const c=DB.clients.find(x=>x.id===clientId); if(!c) return;
+  const payload={ coach:COACH, brand:BRAND_NAME, profile:c,
+    program:DB.programs[clientId]||null, records:(DB.records&&DB.records[clientId])||[], updated:Date.now() };
+  try{ cloud.collection("clients").doc(clientId).set(payload,{merge:true}).catch(e=>console.warn("cloud set",e)); }catch(e){ console.warn(e); }
+}
+function cloudDelete(clientId){
+  if(!cloudOn||!clientId) return;
+  try{ cloud.collection("clients").doc(clientId).delete().catch(()=>{}); }catch(e){}
+  try{ cloud.collection("completions").doc(clientId).delete().catch(()=>{}); }catch(e){}
+}
+function portalLink(id){ let b=location.href.split("#")[0].split("?")[0]; b=b.replace(/[^/]*$/,""); return b+"portal.html?id="+id; }
+function copyPortalLink(id){
+  if(!cloudOn) toast("먼저 Firebase 설정이 필요해요 (가이드 참고)");
+  copyText(portalLink(id), cloudOn?"고객 포털 링크":"링크(설정 후 작동)");
+}
+
+/* ---------- 정식 로그인 (Firebase 인증) + 클라우드 목록 ---------- */
+function tryLogin(){
+  const email=document.getElementById("loginEmail").value.trim();
+  const pw=document.getElementById("loginPw").value;
+  const errEl=document.getElementById("lockErr");
+  if(!auth){ errEl.textContent="로그인 준비가 안 됐어요. 잠시 후 다시 시도하세요."; return; }
+  if(!email||!pw){ errEl.textContent="이메일과 비밀번호를 입력하세요."; return; }
+  errEl.textContent="로그인 중…";
+  auth.signInWithEmailAndPassword(email,pw)
+    .then(()=>{ errEl.textContent=""; })
+    .catch(e=>{
+      const m=e.code||"";
+      errEl.textContent = /wrong-password|user-not-found|invalid-credential|invalid-email/.test(m)
+        ? "이메일 또는 비밀번호가 맞지 않아요." : "로그인 실패: "+(e.message||m);
+    });
+}
+function logout(){ if(auth) auth.signOut(); }
+async function loadFromCloud(){
+  if(!cloudOn) return;
+  try{
+    const qs=await cloud.collection("clients").get();
+    const cClients=[],cPrograms={},cRecords={},ids=new Set();
+    qs.forEach(s=>{ const d=s.data(); ids.add(s.id); if(d.profile)cClients.push(d.profile); if(d.program)cPrograms[s.id]=d.program; if(d.records)cRecords[s.id]=d.records; });
+    // 이 브라우저에만 있던 고객은 클라우드로 올리고 목록에 유지 (데이터 유실 방지)
+    DB.clients.forEach(c=>{ if(!ids.has(c.id)){ cClients.push(c); if(DB.programs[c.id])cPrograms[c.id]=DB.programs[c.id]; if(DB.records&&DB.records[c.id])cRecords[c.id]=DB.records[c.id]; cloudPublish(c.id); } });
+    DB.clients=cClients; DB.programs=cPrograms; DB.records=cRecords; saveDB();
+  }catch(e){ console.warn("cloud load",e); }
+}
+async function reloadClients(){
+  if(!cloudOn){ toast("클라우드가 꺼져 있어요"); return; }
+  toast("목록 불러오는 중…"); await loadFromCloud(); render(); toast("목록 새로고침 ✓");
+}
+async function bootData(){
+  if(cloudOn) await loadFromCloud();
+  renderNav(); render();
+}
+
+/* ---------- 저장소 ---------- */
+function loadDB(){
+  try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {clients:[], programs:{}, contents:[], records:{}}; }
+  catch(e){ return {clients:[], programs:{}, contents:[], records:{}}; }
+}
+function saveDB(){ localStorage.setItem(STORE_KEY, JSON.stringify(DB)); }
+let DB = loadDB();
+DB.records = DB.records || {};
+let currentClientId = null;   // 탭 간 공유되는 선택 고객
+let activeTab = "clients";
+
+/* ---------- 유틸 ---------- */
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function esc(s){ return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function initial(name){ return (name||"?").trim().charAt(0); }
+function toast(msg){
+  const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),1800);
+}
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function copyText(txt,label){
+  navigator.clipboard.writeText(txt).then(()=>toast((label||"복사")+" 완료 ✓"))
+  .catch(()=>{ const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();toast((label||"복사")+" 완료 ✓"); });
+}
+
+/* ---------- 탭 정의 ---------- */
+const TABS = [
+  {id:"clients",  name:"고객 관리",     ic:"👥"},
+  {id:"program",  name:"운동 프로그램",  ic:"🏋️"},
+  {id:"content",  name:"인스타 콘텐츠", ic:"📱"},
+  {id:"checkin",  name:"주간 체크인",   ic:"💬"},
+  {id:"calendar", name:"콘텐츠 캘린더", ic:"📅"},
+  {id:"faq",      name:"FAQ 챗봇",      ic:"🤖"},
+];
+
+function renderNav(){
+  const d=document.getElementById("navDesktop"); d.innerHTML="";
+  TABS.forEach(t=>{
+    const cnt = t.id==="clients" ? `<span class="cnt">${DB.clients.length}</span>` : "";
+    const b=document.createElement("button");
+    b.className="nav-btn"+(activeTab===t.id?" active":"");
+    b.title=t.name;
+    b.innerHTML=`<span class="ic">${t.ic}</span><span class="label">${t.name}</span>${cnt}`;
+    b.onclick=()=>go(t.id); d.appendChild(b);
+  });
+}
+
+function go(tab){ activeTab=tab; renderNav(); render(); window.scrollTo(0,0); }
+
+/* ---------- 공유 고객 선택 바 ---------- */
+function clientBarHTML(){
+  if(DB.clients.length===0) return "";
+  const opts = DB.clients.map(c=>`<option value="${c.id}" ${c.id===currentClientId?"selected":""}>${esc(c.name)} · ${esc(c.goal)}</option>`).join("");
+  const cur = DB.clients.find(c=>c.id===currentClientId);
+  return `<div class="clientbar no-print">
+    <div class="avatar">${esc(initial(cur?cur.name:"?"))}</div>
+    <div style="font-size:12.5px;color:var(--text-dim)">작업 대상 고객</div>
+    <select onchange="currentClientId=this.value; render();">${opts}</select>
+  </div>`;
+}
+
+/* =========================================================
+   1) 고객 관리
+   ========================================================= */
+function viewClients(){
+  const list = DB.clients.length===0
+    ? `<div class="empty"><div class="big">👥</div>아직 등록된 고객이 없어요.<br/>첫 고객을 등록하면 모든 탭에서 불러 쓸 수 있어요.</div>`
+    : `<div class="client-list">`+DB.clients.map(c=>`
+        <div class="client-item">
+          <div class="client-meta">
+            <b>${esc(c.name)}</b>
+            <small>${c.age?esc(c.age)+"세 · ":""}${esc(c.sex||"")} · ${esc(c.level)}</small>
+          </div>
+          <div class="sp">
+            <span class="pill">${esc(c.goal)}</span>
+            <button class="btn btn-ghost btn-sm" onclick="openRecords('${c.id}')">📋 기록</button>
+            <button class="btn btn-ghost btn-sm" onclick="copyPortalLink('${c.id}')">🔗 포털 링크</button>
+            <button class="btn btn-ghost btn-sm" onclick="openClient('${c.id}')">수정</button>
+            <button class="btn btn-danger btn-sm" onclick="delClient('${c.id}')">삭제</button>
+          </div>
+        </div>`).join("")+`</div>`;
+
+  const cloudStatus = cloudOn
+    ? `<span class="pill" style="color:var(--ok);border-color:rgba(55,214,122,.4);">🟢 공유·포털 켜짐</span>`
+    : `<span class="pill">⚪ 클라우드 설정 필요 — 가이드 참고</span>`;
+
+  return `
+    <h1 class="page-title">고객 관리</h1>
+    <p class="page-sub">${cloudOn?"이 목록은 클라우드에 저장돼 코치·관리자가 같은 화면을 봐요.":"여기서 등록한 고객을 모든 탭에서 공유해서 써요."} '기록'으로 진행 메모를, '포털 링크'로 고객이 직접 볼 수 있는 링크를 만들어요.</p>
+    <div class="card">
+      <h3>👥 내 고객 (${DB.clients.length}) &nbsp; ${cloudStatus}</h3>
+      ${list}
+      <div class="row-actions">
+        <button class="btn btn-primary" onclick="openClient()">+ 새 고객 등록</button>
+        ${cloudOn?`<button class="btn btn-ghost" onclick="reloadClients()">🔄 목록 새로고침</button>`:""}
+      </div>
+    </div>`;
+}
+
+function openClient(id){
+  const c = id ? DB.clients.find(x=>x.id===id) : null;
+  document.getElementById("cmTitle").textContent = c?"고객 정보 수정":"고객 등록";
+  document.getElementById("cmId").value = c?c.id:"";
+  document.getElementById("cmName").value = c?c.name:"";
+  document.getElementById("cmAge").value = c?(c.age||""):"";
+  document.getElementById("cmSex").value = c?(c.sex||"여성"):"여성";
+  document.getElementById("cmGoal").value = c?c.goal:"근성장";
+  document.getElementById("cmLevel").value = c?c.level:"초급";
+  document.getElementById("cmNote").value = c?(c.note||""):"";
+  document.getElementById("clientModal").classList.add("show");
+}
+function closeModal(){ document.getElementById("clientModal").classList.remove("show"); }
+function saveClient(){
+  const name=document.getElementById("cmName").value.trim();
+  if(!name){ toast("이름을 입력해 주세요"); return; }
+  const id=document.getElementById("cmId").value;
+  const data={
+    name, age:document.getElementById("cmAge").value.trim(),
+    sex:document.getElementById("cmSex").value, goal:document.getElementById("cmGoal").value,
+    level:document.getElementById("cmLevel").value, note:document.getElementById("cmNote").value.trim()
+  };
+  let savedId=id;
+  if(id){ const c=DB.clients.find(x=>x.id===id); Object.assign(c,data); }
+  else { const nid=uid(); DB.clients.push({id:nid,...data,created:Date.now()}); currentClientId=nid; savedId=nid; }
+  saveDB(); cloudPublish(savedId); closeModal(); render(); toast("저장되었습니다 ✓");
+}
+function delClient(id){
+  if(!confirm("이 고객을 삭제할까요? 저장된 프로그램·기록도 함께 삭제됩니다.")) return;
+  DB.clients=DB.clients.filter(c=>c.id!==id); delete DB.programs[id]; if(DB.records) delete DB.records[id];
+  if(currentClientId===id) currentClientId=null;
+  saveDB(); cloudDelete(id); render(); toast("삭제되었습니다");
+}
+
+/* ---------- 고객 진행 기록 ---------- */
+function openRecords(id){
+  const c=DB.clients.find(x=>x.id===id); if(!c) return;
+  document.getElementById("rcTitle").textContent=c.name+"님 진행 기록";
+  document.getElementById("rcClientId").value=id;
+  document.getElementById("rcDate").value=""; document.getElementById("rcTag").value=""; document.getElementById("rcText").value="";
+  renderRecordList(id);
+  document.getElementById("recModal").classList.add("show");
+}
+function renderRecordList(id){
+  const recs=(DB.records&&DB.records[id])||[];
+  document.getElementById("rcList").innerHTML = recs.length ? recs.map((r,i)=>`
+    <div style="background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;">
+        <b style="font-size:13px;color:var(--brand-accent);">${esc(r.date||"기록")}</b>
+        ${r.tag?`<span class="pill">${esc(r.tag)}</span>`:""}
+        <button class="btn btn-danger btn-sm" style="margin-left:auto;" onclick="delRecord('${id}',${i})">삭제</button>
+      </div>
+      <div style="font-size:13.5px;white-space:pre-wrap;">${esc(r.text)}</div>
+    </div>`).join("") : `<p style="color:var(--text-mute);font-size:13px;margin-top:10px;">아직 기록이 없어요. 첫 기록을 추가해 보세요.</p>`;
+}
+function addRecord(){
+  const id=document.getElementById("rcClientId").value;
+  const text=document.getElementById("rcText").value.trim();
+  if(!text){ toast("내용을 입력하세요"); return; }
+  DB.records=DB.records||{}; DB.records[id]=DB.records[id]||[];
+  DB.records[id].unshift({date:document.getElementById("rcDate").value.trim(), tag:document.getElementById("rcTag").value.trim(), text, ts:Date.now()});
+  saveDB(); cloudPublish(id); renderRecordList(id);
+  document.getElementById("rcDate").value=""; document.getElementById("rcTag").value=""; document.getElementById("rcText").value="";
+  toast("기록 추가 ✓");
+}
+function delRecord(id,i){
+  if(!DB.records||!DB.records[id]) return;
+  DB.records[id].splice(i,1); saveDB(); cloudPublish(id); renderRecordList(id);
+}
+
+/* =========================================================
+   2) 운동 프로그램 생성기 (규칙 기반 · API 불필요)
+   ========================================================= */
+const EX = {
+  가슴:{
+    맨몸:["푸시업","와이드 푸시업","디클라인 푸시업","니 푸시업"],
+    덤벨:["덤벨 벤치프레스","인클라인 덤벨프레스","덤벨 플라이"],
+    바벨:["바벨 벤치프레스","인클라인 바벨프레스"],
+    머신:["체스트 프레스 머신","펙덱 플라이","케이블 크로스오버"]
+  },
+  등:{
+    맨몸:["인버티드 로우","슈퍼맨","풀업(가능 시)"],
+    덤벨:["덤벨 로우","덤벨 풀오버"],
+    바벨:["바벨 로우","펜들레이 로우","데드리프트"],
+    머신:["랫풀다운","시티드 케이블 로우","머신 로우"]
+  },
+  하체:{
+    맨몸:["스쿼트(맨몸)","런지","글루트 브릿지","월싯","스텝업"],
+    덤벨:["고블릿 스쿼트","덤벨 런지","덤벨 루마니안 데드리프트","덤벨 스텝업"],
+    바벨:["바벨 백스쿼트","바벨 루마니안 데드리프트","바벨 힙 쓰러스트","프론트 스쿼트"],
+    머신:["레그프레스","레그 익스텐션","레그 컬","힙 어브덕션"]
+  },
+  어깨:{
+    맨몸:["파이크 푸시업","월 워크"],
+    덤벨:["덤벨 숄더프레스","사이드 레터럴 레이즈","벤트오버 레터럴 레이즈"],
+    바벨:["바벨 오버헤드프레스","업라이트 로우"],
+    머신:["숄더프레스 머신","케이블 레터럴 레이즈"]
+  },
+  팔:{
+    맨몸:["다이아몬드 푸시업","벤치 딥스"],
+    덤벨:["덤벨 컬","해머 컬","덤벨 트라이셉스 익스텐션"],
+    바벨:["바벨 컬","클로즈그립 벤치프레스"],
+    머신:["케이블 푸시다운","케이블 컬"]
+  },
+  코어:{
+    맨몸:["플랭크","데드버그","마운틴 클라이머","레그 레이즈","러시안 트위스트","바이시클 크런치"],
+    덤벨:["덤벨 사이드밴드","웨이티드 크런치"],
+    바벨:[],
+    머신:["케이블 크런치","앱 롤아웃"]
+  }
+};
+const CARDIO = ["빠르게 걷기(경사)","실내 자전거","로잉머신","줄넘기","계단 오르기","버피","점핑잭"];
+
+// 분할 설계: 주 횟수별 요일 구성
+function splitPlan(freq, goal){
+  if(freq<=2) return [["가슴","등","하체","코어"],["어깨","팔","하체","코어"]];
+  if(freq===3){
+    if(goal==="다이어트"||goal==="기초체력") return [["하체","코어","가슴"],["등","어깨","코어"],["하체","팔","코어"]];
+    return [["가슴","어깨","팔"],["등","팔","코어"],["하체","코어"]]; // 밀기/당기기/하체
+  }
+  if(freq===4) return [["가슴","어깨","팔"],["등","팔","코어"],["하체","코어"],["어깨","등","코어"]];
+  // 5회
+  return [["가슴","팔"],["등","코어"],["하체"],["어깨","팔"],["하체","코어"]];
+}
+
+// 목표별 세트/반복/휴식/점진 스킴
+function scheme(goal, level, week, totalWeeks){
+  let base;
+  if(goal==="근력") base={sets:5,rep:"3~5회",rest:"2~3분",cardio:0};
+  else if(goal==="근성장") base={sets:4,rep:"8~12회",rest:"60~90초",cardio:0};
+  else if(goal==="다이어트") base={sets:3,rep:"12~15회",rest:"30~45초",cardio:2};
+  else if(goal==="체형교정") base={sets:3,rep:"12~15회(천천히)",rest:"45~60초",cardio:0};
+  else base={sets:2,rep:"10~12회",rest:"60초",cardio:0}; // 기초체력
+  if(level==="초급" && base.sets>3) base.sets=3;
+  if(level==="고급" && goal==="근성장") base.sets=4;
+  // 점진적 부하: 주차 진행에 따른 코칭 큐
+  const prog = progressionCue(goal, level, week, totalWeeks);
+  return {...base, prog};
+}
+function progressionCue(goal, level, week, totalWeeks){
+  const isDeload = totalWeeks>=8 && week%4===0; // 4주마다 디로드
+  if(isDeload) return {tag:"디로드", note:"강도 40~50%로 낮추고 폼·회복에 집중 (부하 내리기)"};
+  const step = week; // 1주차부터 누적
+  if(goal==="근력"||goal==="근성장"){
+    const pct = Math.min(2.5*(step-1),12.5);
+    return {tag:`${week}주차`, note: step===1?"기준 무게 설정(마지막 2회가 힘든 무게)":`지난주 대비 무게 약 ${pct}%↑ 또는 반복 +1~2회`};
+  }
+  if(goal==="다이어트"){
+    return {tag:`${week}주차`, note: step===1?"자세 익히기 + 휴식 정확히 지키기":`세트 간 휴식 ${Math.max(30,45-5*(step-1))}초로 단축, 반복 유지`};
+  }
+  return {tag:`${week}주차`, note: step===1?"가동범위·정렬 우선, 통증 없는 범위":"움직임이 편해지면 반복/세트 점진 증가"};
+}
+
+function buildExerciseList(parts, equips, goal, level){
+  const out=[];
+  const perPart = parts.length<=2 ? 3 : (parts.length===3?2:2);
+  parts.forEach(part=>{
+    let pool=[];
+    equips.forEach(eq=>{ if(EX[part]&&EX[part][eq]) pool=pool.concat(EX[part][eq]); });
+    if(pool.length===0 && EX[part]) pool=EX[part]["맨몸"]||[];
+    pool=shuffle([...new Set(pool)]);
+    let n = perPart; if(part==="코어") n=Math.min(2,pool.length);
+    pool.slice(0,Math.max(1,n)).forEach(name=>out.push({part,name}));
+  });
+  return out;
+}
+
+function generateProgram(){
+  const c = DB.clients.find(x=>x.id===currentClientId);
+  if(!c){ toast("먼저 고객을 선택/등록하세요"); return; }
+  const equips = window._equips && window._equips.length ? window._equips : ["맨몸"];
+  const freq = parseInt(document.getElementById("pgFreq").value);
+  const weeks = parseInt(document.getElementById("pgWeeks").value);
+  const goal = document.getElementById("pgGoal").value;
+  const level = document.getElementById("pgLevel").value;
+  const focus = document.getElementById("pgFocus").value.trim();
+
+  const split = splitPlan(freq, goal).slice(0,freq);
+  const weeksArr=[];
+  for(let w=1; w<=weeks; w++){
+    const sc = scheme(goal, level, w, weeks);
+    const days = split.map((parts,di)=>{
+      const exs = buildExerciseList(parts, equips, goal, level);
+      return {day:di+1, parts, exercises:exs, sets:sc.sets, rep:sc.rep, rest:sc.rest,
+              cardio: sc.cardio>0 ? {rounds:sc.cardio, moves:shuffle(CARDIO).slice(0,2)} : null };
+    });
+    weeksArr.push({week:w, prog:sc.prog, days});
+  }
+  const program={id:uid(), clientId:c.id, goal, level, freq, weeks, focus, equips, created:Date.now(), weeksArr};
+  DB.programs[c.id]=program; saveDB(); cloudPublish(c.id);
+  render();
+  setTimeout(()=>{const el=document.getElementById("progResult"); if(el) el.scrollIntoView({behavior:"smooth"});},60);
+  toast("프로그램이 생성되었습니다 ✓");
+}
+
+function programResultHTML(p, c){
+  const rows = p.weeksArr.map(w=>{
+    const dayTables = w.days.map(d=>{
+      const exRows = d.exercises.map(e=>`
+        <tr><td><span class="pill">${esc(e.part)}</span></td><td>${esc(e.name)}</td>
+        <td class="c">${d.sets}세트</td><td class="c">${esc(d.rep)}</td><td class="c">${esc(d.rest)}</td></tr>`).join("");
+      const cardio = d.cardio ? `<tr><td><span class="pill">유산소</span></td><td>${d.cardio.moves.map(esc).join(" / ")}</td><td class="c" colspan="3">${d.cardio.rounds}라운드 · 각 40초 운동 / 20초 휴식</td></tr>`:"";
+      return `<div style="padding:6px 14px 12px;">
+        <div style="margin:10px 0 6px;font-weight:800;font-size:13px;"><span class="daychip">DAY ${d.day}</span> &nbsp;${d.parts.map(esc).join(" · ")}</div>
+        <table class="prog"><tr><th>부위</th><th>운동</th><th>세트</th><th>반복</th><th>휴식</th></tr>${exRows}${cardio}</table>
+      </div>`;
+    }).join("");
+    return `<div class="week-block">
+      <div class="week-head"><span class="tag">${esc(w.prog.tag)}</span> ${esc(w.prog.note)}</div>
+      ${dayTables}
+    </div>`;
+  }).join("");
+
+  return `<div class="result" id="progResult">
+    <div class="print-only print-head"><b>${COACH} 코치 · ${esc(c.name)}님 운동 프로그램</b><div style="color:#555;font-size:12px;margin-top:4px;">목표 ${esc(p.goal)} · ${esc(p.level)} · 주 ${p.freq}회 · ${p.weeks}주 · 기구: ${p.equips.map(esc).join(", ")}</div></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;" class="no-print">
+      <span class="pill">🎯 ${esc(p.goal)}</span><span class="pill">📈 ${esc(p.level)}</span>
+      <span class="pill">📅 주 ${p.freq}회 · ${p.weeks}주</span><span class="pill">🏋️ ${p.equips.map(esc).join(", ")}</span>
+      ${p.focus?`<span class="pill">✨ ${esc(p.focus)}</span>`:""}
+    </div>
+    ${rows}
+    <div class="row-actions no-print">
+      <button class="btn btn-primary" onclick="window.print()">📄 PDF로 저장 / 인쇄</button>
+      <button class="btn btn-lime" onclick="copyProgram()">📋 텍스트 복사 (전송용)</button>
+      <button class="btn btn-ghost" onclick="delete DB.programs['${c.id}'];saveDB();render();">↻ 다시 만들기</button>
+    </div>
+    <div class="disclaimer">⚠️ 본 프로그램은 일반적인 운동 정보 제공용이며 <b>의료적 조언이 아닙니다.</b> 통증·질환·부상 이력이 있으면 운동 전 전문의 또는 물리치료사와 상담하세요. 통증이 느껴지면 즉시 중단하세요.</div>
+  </div>`;
+}
+
+/* 고객 완료 현황 (고객 포털에서 체크한 내용을 클라우드에서 읽어와 표시) */
+function doneStatusHTML(p,comp){
+  let totalDays=0,doneDays=0,partDays=0,totalEx=0,doneEx=0; const badges=[];
+  p.weeksArr.forEach(w=>w.days.forEach(d=>{
+    totalDays++;
+    const n=d.exercises.length+(d.cardio?1:0); const dayKey="w"+w.week+"d"+d.day;
+    let dn=0; for(let i=0;i<n;i++) if(comp[dayKey+"i"+i]) dn++;
+    totalEx+=n; doneEx+=dn;
+    let cls='', mark='⚪';
+    if(n>0&&dn===n){ doneDays++; cls='color:var(--ok);border-color:rgba(55,214,122,.45);'; mark='✅'; }
+    else if(dn>0){ partDays++; cls='color:#ffcf3f;border-color:rgba(255,207,63,.45);'; mark='🟡'; }
+    badges.push(`<span class="pill" style="${cls}">${mark} ${w.week}주 D${d.day} <b>${dn}/${n}</b></span>`);
+  }));
+  return `<div class="card"><h3>📊 고객 완료 현황</h3>
+    <p style="font-size:14.5px;margin:0 0 5px;">완료 <b style="color:var(--ok)">${doneDays}일</b> · 진행 중 <b style="color:#ffcf3f">${partDays}일</b> · 미시작 ${totalDays-doneDays-partDays}일</p>
+    <p style="font-size:12.5px;color:var(--text-dim);margin:0 0 12px;">전체 운동 ${totalEx}개 중 <b>${doneEx}개</b> 완료 ${doneEx>0?'🔥':''} &nbsp;·&nbsp; 고객이 포털에서 체크하면 여기에 실시간으로 쌓여요 (최신 상태는 ↻ 새로고침)</p>
+    <div class="chips">${badges.join("")}</div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:12px;" onclick="refreshDoneStatus()">↻ 새로고침</button></div>`;
+}
+async function refreshDoneStatus(){
+  const el=document.getElementById("doneStatus"); if(!el) return;
+  const c=DB.clients.find(x=>x.id===currentClientId); const p=c&&DB.programs[c.id]; if(!p) return;
+  if(!cloudOn){ el.innerHTML=`<div class="disclaimer">고객 포털(Firebase)이 켜지면 여기서 고객의 완료 체크 현황을 볼 수 있어요.</div>`; return; }
+  el.innerHTML=`<p style="color:var(--text-dim);font-size:13px;margin-top:14px;">완료 현황 불러오는 중…</p>`;
+  try{
+    const snap=await cloud.collection("completions").doc(c.id).get();
+    const comp=(snap.exists&&snap.data())||{};
+    el.innerHTML=doneStatusHTML(p,comp);
+  }catch(e){ el.innerHTML=`<p style="color:var(--text-mute);font-size:12px;margin-top:14px;">완료 현황을 불러오지 못했어요.</p>`; }
+}
+
+function copyProgram(){
+  const c = DB.clients.find(x=>x.id===currentClientId); const p=DB.programs[c.id]; if(!p) return;
+  let t=`[${COACH} 코치] ${c.name}님 운동 프로그램\n목표: ${p.goal} / 수준: ${p.level} / 주 ${p.freq}회 · ${p.weeks}주\n기구: ${p.equips.join(", ")}\n`;
+  p.weeksArr.forEach(w=>{
+    t+=`\n■ ${w.prog.tag} — ${w.prog.note}\n`;
+    w.days.forEach(d=>{
+      t+=` [DAY ${d.day}] ${d.parts.join(" · ")}\n`;
+      d.exercises.forEach(e=>{ t+=`  - ${e.name} : ${d.sets}세트 x ${d.rep} (휴식 ${d.rest})\n`; });
+      if(d.cardio) t+=`  - 유산소: ${d.cardio.moves.join(" / ")} ${d.cardio.rounds}라운드\n`;
+    });
+  });
+  t+=`\n※ 본 내용은 의료적 조언이 아니며, 통증·질환 시 전문의 상담을 권장합니다.`;
+  copyText(t,"프로그램 복사");
+}
+
+function viewProgram(){
+  if(DB.clients.length===0){
+    return `<h1 class="page-title">운동 프로그램 생성기</h1>
+      <p class="page-sub">고객의 목표·수준·기구·주 횟수를 넣으면 주차별 프로그램을 자동으로 만들어요.</p>
+      <div class="card"><div class="empty"><div class="big">🏋️</div>먼저 <b>고객 관리</b>에서 고객을 등록해 주세요.</div>
+      <div class="row-actions" style="justify-content:center"><button class="btn btn-primary" onclick="go('clients')">고객 등록하러 가기</button></div></div>`;
+  }
+  if(!currentClientId) currentClientId=DB.clients[0].id;
+  const c = DB.clients.find(x=>x.id===currentClientId);
+  const existing = DB.programs[c.id];
+  const equipList=["맨몸","덤벨","바벨","머신"];
+  window._equips = window._equips || ["맨몸","덤벨"];
+  const eqChips = equipList.map(e=>`<span class="chip ${window._equips.includes(e)?'on':''}" onclick="toggleEquip('${e}')">${e}</span>`).join("");
+
+  return `<h1 class="page-title">운동 프로그램 생성기</h1>
+    <p class="page-sub">선택한 고객 정보로 주차별(세트/반복/점진 부하) 프로그램을 만들고 PDF로 저장하세요.</p>
+    ${clientBarHTML()}
+    ${existing?`<div id="doneStatus"></div>`:""}
+    <div class="card no-print">
+      <h3>⚙️ 설정</h3>
+      <div class="grid g3">
+        <div><label class="fld">목표</label>
+          <select id="pgGoal">
+            ${["근성장","다이어트","체형교정","근력","기초체력"].map(g=>`<option ${c.goal===g?"selected":""}>${g}</option>`).join("")}
+          </select></div>
+        <div><label class="fld">수준</label>
+          <select id="pgLevel">${["초급","중급","고급"].map(l=>`<option ${c.level===l?"selected":""}>${l}</option>`).join("")}</select></div>
+        <div><label class="fld">주 운동 횟수</label>
+          <select id="pgFreq">${[2,3,4,5].map(f=>`<option value="${f}" ${f===3?"selected":""}>주 ${f}회</option>`).join("")}</select></div>
+      </div>
+      <div class="grid g2" style="margin-top:14px;">
+        <div><label class="fld">프로그램 기간</label>
+          <select id="pgWeeks">${[4,8,12].map(w=>`<option value="${w}" ${w===4?"selected":""}>${w}주</option>`).join("")}</select></div>
+        <div><label class="fld">특별 포커스 (선택)</label>
+          <input type="text" id="pgFocus" placeholder="예) 힙업, 라운드숄더 개선" /></div>
+      </div>
+      <div style="margin-top:14px;">
+        <label class="fld">사용 가능한 기구 (여러 개 선택)</label>
+        <div class="chips">${eqChips}</div>
+      </div>
+      <div class="row-actions"><button class="btn btn-primary" onclick="generateProgram()">⚡ 프로그램 생성</button></div>
+    </div>
+    ${existing?programResultHTML(existing,c):""}`;
+}
+function toggleEquip(e){
+  window._equips = window._equips||[];
+  if(window._equips.includes(e)) window._equips=window._equips.filter(x=>x!==e);
+  else window._equips.push(e);
+  if(window._equips.length===0) window._equips=["맨몸"];
+  render();
+}
+
+/* =========================================================
+   3) 인스타 콘텐츠 생성기 (황서린 말투 · 템플릿 기반)
+   ========================================================= */
+const HOOKS = [
+  t=>`${t}, 아직도 이렇게 하고 계세요? 🙅‍♀️`,
+  t=>`${t} 할 때 90%가 놓치는 것 딱 하나.`,
+  t=>`PT 10년차가 알려주는 ${t}의 진실.`,
+  t=>`${t}, 이거 모르면 시간 낭비예요.`,
+  t=>`살면서 한 번은 꼭 봐야 할 ${t} 꿀팁.`,
+  t=>`${t} 3일만 이렇게 해보세요. 몸이 바뀝니다.`,
+  t=>`운동 초보일수록 ${t} 이렇게 하세요.`,
+  t=>`${t}, 헬스장에서 아무도 안 알려주는 것.`
+];
+const CTA = [
+  "저장하고 다음 운동 때 꼭 따라 해보세요 💪",
+  "궁금한 건 댓글로! 서린쌤이 직접 답해드려요 🙌",
+  "주변에 운동 고민하는 친구 있으면 공유해 주세요 🔁",
+  "더 자세한 코칭이 필요하면 프로필 링크 확인 👀",
+  "오늘도 한 세트만 더! 저장 필수 ⭐"
+];
+const HASH_BASE = ["#황서린코치","#헬스","#운동","#홈트","#다이어트","#근력운동","#헬스타그램","#운동스타그램","#PT","#바디프로필","#헬린이","#오운완"];
+
+function seorinScript(topic){
+  const t=topic.trim();
+  const hook = pick(HOOKS)(t);
+  const bodyTemplates=[
+    [`먼저, 왜 ${t}가 중요한지부터 짚고 갈게요.`,
+     `대부분 여기서 실수해요 — 무게보다 '자세'가 먼저예요.`,
+     `핵심 포인트 3가지만 기억하세요.\n1) 호흡: 힘 줄 때 내쉬기\n2) 가동범위: 끝까지, 반동 없이\n3) 속도: 내릴 때 2초, 천천히`,
+     `이 세 가지만 지켜도 효과가 확 달라져요.`],
+    [`${t}, 저도 처음엔 진짜 많이 헤맸어요.`,
+     `그런데 이 방법 하나 바꾸고 나서 회원분들 결과가 달라졌어요.`,
+     `오늘 딱 알려드릴 건 '천천히, 정확하게'예요.\n반복 수보다 한 번의 정확한 동작이 훨씬 중요해요.`,
+     `무리하지 말고, 내 몸 상태에 맞춰서 가는 게 제일 빨라요.`],
+    [`${t} 할 때 이 부위에 자극이 안 온다면 자세를 점검하세요.`,
+     `체크리스트 갈게요 ✅\n· 발 위치는 어깨너비인가?\n· 코어에 힘이 들어가 있나?\n· 목·허리는 중립인가?`,
+     `하나라도 놓치면 엉뚱한 데 힘이 들어가요.`,
+     `거울 보면서 한 세트만 천천히 해보면 바로 느껴질 거예요.`]
+  ];
+  const body = pick(bodyTemplates);
+  const cta = pick(CTA);
+  return {hook, body, cta};
+}
+
+function generateContent(){
+  const topic=document.getElementById("ctTopic").value.trim();
+  if(!topic){ toast("주제를 입력해 주세요"); return; }
+  const tone=document.getElementById("ctTone").value;
+  const s=seorinScript(topic);
+
+  // 톤 보정
+  let opener = s.hook;
+  if(tone==="전문적") opener = `${topic}에 대해 정확히 알려드릴게요.`;
+  if(tone==="유쾌") opener = s.hook+" 😆";
+
+  const scriptFull = `🎬 [0~2초 · 훅]\n${opener}\n\n🎬 [3~10초 · 전개]\n${s.body[0]}\n${s.body[1]}\n\n🎬 [11~25초 · 핵심]\n${s.body[2]}\n\n🎬 [26~30초 · 마무리 & CTA]\n${s.body[3]}\n${s.cta}`;
+
+  const caption = `${opener}\n\n${topic}, 어렵게 생각하지 마세요. 오늘 알려드린 포인트만 기억하면 돼요 💪\n\n${s.body[3]}\n\n${s.cta}\n\n— ${COACH} 코치\n\n※ 통증이나 질환이 있다면 무리하지 말고 전문가와 상담하세요.`;
+
+  // 해시태그: 주제 키워드 반영
+  const topicTag = "#"+topic.replace(/\s+/g,"");
+  const tags = shuffle(HASH_BASE).slice(0,9);
+  const hashline = [topicTag, ...tags].filter((v,i,a)=>a.indexOf(v)===i).slice(0,12).join(" ");
+
+  const hookVariants = shuffle(HOOKS).slice(0,3).map(f=>f(topic));
+
+  DB.contents.unshift({id:uid(),topic,created:Date.now()});
+  if(DB.contents.length>30) DB.contents.pop();
+  saveDB();
+
+  const html = `<div class="result" id="ctResult">
+    <div class="out-block">
+      <div class="lab">🎣 훅 후보 (3개 중 골라 쓰기)</div>
+      <div class="out-body">${hookVariants.map((h,i)=>`${i+1}. ${esc(h)}`).join("\n")}<button class="btn btn-lime btn-sm copybtn" onclick='copyText(${JSON.stringify(hookVariants.join("\n"))},"훅")'>복사</button></div>
+    </div>
+    <div class="out-block">
+      <div class="lab">🎬 릴스 대본 (약 30초)</div>
+      <div class="out-body">${esc(scriptFull)}<button class="btn btn-lime btn-sm copybtn" onclick='copyText(${JSON.stringify(scriptFull)},"대본")'>복사</button></div>
+    </div>
+    <div class="out-block">
+      <div class="lab">✍️ 캡션</div>
+      <div class="out-body">${esc(caption)}<button class="btn btn-lime btn-sm copybtn" onclick='copyText(${JSON.stringify(caption)},"캡션")'>복사</button></div>
+    </div>
+    <div class="out-block">
+      <div class="lab"># 해시태그</div>
+      <div class="out-body hashline">${esc(hashline)}<button class="btn btn-lime btn-sm copybtn" onclick='copyText(${JSON.stringify(hashline)},"해시태그")'>복사</button></div>
+    </div>
+    <div class="row-actions">
+      <button class="btn btn-primary" onclick="generateContent()">↻ 다른 버전 생성</button>
+      <button class="btn btn-ghost" onclick='copyText(${JSON.stringify(scriptFull+"\n\n"+caption+"\n\n"+hashline)},"전체")'>📋 전체 복사</button>
+    </div>
+    <div class="disclaimer">⚠️ 운동·건강 정보는 일반적인 참고용이며 의료적 조언이 아닙니다. 팔로워에게 통증·질환 시 전문가 상담을 권하는 문구를 함께 넣는 것을 권장합니다.</div>
+  </div>`;
+  document.getElementById("ctOut").innerHTML = html;
+  setTimeout(()=>document.getElementById("ctResult").scrollIntoView({behavior:"smooth"}),60);
+  toast("콘텐츠가 생성되었습니다 ✓");
+}
+
+function viewContent(){
+  const recent = DB.contents.slice(0,6).map(c=>`<span class="chip" onclick="document.getElementById('ctTopic').value='${esc(c.topic)}'">${esc(c.topic)}</span>`).join("");
+  return `<h1 class="page-title">인스타 콘텐츠 생성기</h1>
+    <p class="page-sub">주제 하나만 넣으면 ${COACH} 코치 말투로 릴스 훅·대본·캡션·해시태그를 만들어요.</p>
+    <div class="card no-print">
+      <h3>📱 콘텐츠 만들기</h3>
+      <div><label class="fld">주제 / 키워드 *</label>
+        <input type="text" id="ctTopic" placeholder="예) 스쿼트 무릎 통증, 겨울 다이어트, 힙업 운동" onkeydown="if(event.key==='Enter')generateContent()" /></div>
+      <div style="margin-top:14px;"><label class="fld">말투 톤</label>
+        <select id="ctTone"><option value="친근">친근한 서린쌤 (기본)</option><option value="전문적">전문적·신뢰감</option><option value="유쾌">유쾌·에너지</option></select></div>
+      ${recent?`<div style="margin-top:14px;"><label class="fld">최근 주제</label><div class="chips">${recent}</div></div>`:""}
+      <div class="row-actions"><button class="btn btn-primary" onclick="generateContent()">⚡ 콘텐츠 생성</button></div>
+    </div>
+    <div id="ctOut"></div>`;
+}
+
+/* =========================================================
+   4) 주간 체크인 메시지 생성기
+   ========================================================= */
+const CHECKIN_SITUATIONS = [
+  {key:"순조",  label:"순조롭게 진행 중"},
+  {key:"정체기", label:"정체기 · 변화가 더딤"},
+  {key:"저조",  label:"컨디션 저조 · 결석"},
+  {key:"복귀",  label:"오랜만에 복귀"},
+  {key:"동기",  label:"동기부여가 필요"},
+];
+const CHECKIN_TPL = {
+  순조:[
+    (n,g,m)=>`${n}님, 이번 주도 정말 잘 따라와 주셨어요! 👏\n${g} 목표에 꾸준히 가까워지고 있는 게 느껴져요.${m?`\n특히 ${m} 부분, 인상 깊었어요.`:""}\n다음 주도 이 페이스 그대로 가볼게요. 궁금한 거 있으면 언제든 편하게 물어봐 주세요 💪`,
+    (n,g,m)=>`${n}님 한 주 고생 많으셨어요 😊\n운동 성실하게 해주셔서 ${g} 흐름이 아주 좋아요.${m?` (${m})`:""}\n이번 주는 딱 하나, '자세 정확하게'에만 더 집중해봐요. 제가 옆에서 계속 체크해드릴게요!`,
+  ],
+  정체기:[
+    (n,g,m)=>`${n}님, 요즘 변화가 더디게 느껴질 수 있는데 이건 아주 자연스러운 과정이에요.\n몸이 적응하는 시기라, 방법을 살짝 바꿔주면 다시 확 치고 나가요.${m?`\n말씀 주신 ${m}도 같이 조정해볼게요.`:""}\n이번 주 프로그램 강도를 조금 손봤어요. 믿고 따라와 주세요 🙌`,
+    (n,g,m)=>`${n}님! 정체기는 '잘 하고 있다'는 신호이기도 해요 😊\n${g}는 직선이 아니라 계단식으로 오거든요. 지금이 딱 다음 계단 직전이에요.\n이번 주는 무게보다 반복 수와 자극에 집중해볼게요. 같이 넘어가요!`,
+  ],
+  저조:[
+    (n,g,m)=>`${n}님, 이번 주 컨디션은 좀 어떠셨어요?\n못 나오는 주도 당연히 있어요 — 중요한 건 다시 시작하는 거예요 😊${m?`\n${m} 관련해서는 무리하지 마시고요.`:""}\n부담 갖지 말고 가볍게 몸 푸는 것부터 다시 시작해봐요. 제가 페이스 맞춰드릴게요!`,
+    (n,g,m)=>`${n}님 :) 한 주 어떻게 보내셨어요?\n요즘 조금 힘드셨던 것 같은데, 운동은 컨디션 봐가면서 천천히 가도 괜찮아요.\n이번 주는 딱 30분, 가벼운 것부터 같이 해봐요. 리듬 찾으면 금방이에요 💪`,
+  ],
+  복귀:[
+    (n,g,m)=>`${n}님, 다시 돌아오신 거 정말 환영해요! 🎉\n공백이 있어도 걱정 마세요 — 몸은 기억하고 있어서 생각보다 빨리 올라와요.\n이번 주는 예전 강도의 60~70%로 부드럽게 시작할게요.${m?` (${m} 참고할게요.)`:""} 부상 없이 다시 만들어가요!`,
+    (n,g,m)=>`${n}님 오랜만이에요 😊 돌아와 주셔서 반가워요!\n처음부터 무리하면 안 되니, 이번 주는 몸 깨우는 데 집중할게요.\n한 번 나오는 게 제일 어려워요. 그거 하셨으니 이미 반은 성공이에요 💪`,
+  ],
+  동기:[
+    (n,g,m)=>`${n}님, 처음 ${g} 목표 세웠을 때 기억나세요? 😊\n그때 마음이 지금도 충분히 유효해요. 완벽하게 말고, 꾸준하게만 가면 돼요.\n이번 주는 딱 '3번 나오기'만 목표로 해봐요. 나머지는 제가 챙길게요 💪${m?`\n(${m})`:""}`,
+  ],
+};
+function generateCheckin(){
+  const c=DB.clients.find(x=>x.id===currentClientId);
+  if(!c){toast("먼저 고객을 선택하세요");return;}
+  const sit=document.getElementById("ckSit").value;
+  const memo=document.getElementById("ckMemo").value.trim();
+  const tpls=CHECKIN_TPL[sit]||CHECKIN_TPL["순조"];
+  const msgs=shuffle(tpls).slice(0,Math.min(2,tpls.length)).map(f=>f(c.name,c.goal,memo));
+  const needDisc=/통증|부상|아프|아픈|다침|다쳤/.test(memo);
+  document.getElementById("ckOut").innerHTML=`<div class="result">
+    ${msgs.map((mt,i)=>`<div class="out-block">
+      <div class="lab">✉️ 초안 ${i+1}</div>
+      <div class="out-body">${esc(mt)}<button class="btn btn-lime btn-sm copybtn" onclick='copyText(${JSON.stringify(mt)},"메시지")'>복사</button></div>
+    </div>`).join("")}
+    <div class="row-actions"><button class="btn btn-primary" onclick="generateCheckin()">↻ 다른 문구</button></div>
+    ${needDisc?`<div class="disclaimer">⚠️ 통증·부상이 언급되었어요. 무리한 운동 지시 대신, 필요 시 전문의·물리치료사 상담을 함께 안내하세요.</div>`:""}
+  </div>`;
+  toast("체크인 초안 생성 ✓");
+}
+function viewCheckin(){
+  if(DB.clients.length===0){
+    return `<h1 class="page-title">주간 체크인 메시지</h1><p class="page-sub">고객에게 보낼 주간 체크인 메시지를 ${COACH} 코치 말투로 만들어요.</p>
+    <div class="card"><div class="empty"><div class="big">💬</div>먼저 <b>고객 관리</b>에서 고객을 등록해 주세요.</div>
+    <div class="row-actions" style="justify-content:center"><button class="btn btn-primary" onclick="go('clients')">고객 등록하러 가기</button></div></div>`;
+  }
+  if(!currentClientId) currentClientId=DB.clients[0].id;
+  const sitOpts=CHECKIN_SITUATIONS.map(s=>`<option value="${s.key}">${s.label}</option>`).join("");
+  return `<h1 class="page-title">주간 체크인 메시지</h1>
+    <p class="page-sub">선택한 고객의 상황에 맞춰 따뜻한 체크인 메시지 초안을 만들어요. 복사해서 카톡·DM으로 바로 보내세요.</p>
+    ${clientBarHTML()}
+    <div class="card">
+      <h3>💬 상황 선택</h3>
+      <div><label class="fld">이번 주 고객 상황</label><select id="ckSit">${sitOpts}</select></div>
+      <div style="margin-top:14px;"><label class="fld">한 줄 메모 (선택)</label>
+        <input type="text" id="ckMemo" placeholder="예) 지난주 3회 다 나옴 / 어깨가 뻐근하다고 함" /></div>
+      <div class="row-actions"><button class="btn btn-primary" onclick="generateCheckin()">⚡ 메시지 생성</button></div>
+    </div>
+    <div id="ckOut"></div>`;
+}
+
+/* =========================================================
+   5) 30일 콘텐츠 캘린더
+   ========================================================= */
+const PILLARS=[
+  {tag:"운동 팁",   fmt:"릴스",   pool:["초보자가 가장 많이 틀리는 ○○ 자세","3대 운동, 제대로 하는 법","집에서 맨몸으로 하는 하체 루틴","운동 전 꼭 해야 할 워밍업 3가지","등 운동할 때 등에 자극 주는 팁"]},
+  {tag:"자세 교정", fmt:"릴스",   pool:["라운드 숄더 펴는 스트레칭","거북목 개선 운동 3가지","골반 전방경사 체크 & 교정","무릎 통증 줄이는 스쿼트 팁","앉아서 하는 자세 리셋 동작"]},
+  {tag:"식단",     fmt:"카드뉴스", pool:["다이어트 중 야식 참는 현실 팁","단백질 쉽게 챙기는 하루 식단","외식할 때 메뉴 고르는 법","편의점 다이어트 조합 추천","물 많이 마시면 살이 빠질까?"]},
+  {tag:"동기부여", fmt:"스토리",   pool:["운동 3일만 하고 그만두는 이유","작심삼일 끊는 딱 한 가지 방법","오늘 운동 가기 싫은 당신에게","비교는 어제의 나랑만","꾸준함이 재능을 이기는 이유"]},
+  {tag:"고객 스토리",fmt:"릴스",  pool:["3개월 만에 달라진 회원님 이야기","운동으로 바뀐 건 몸만이 아니에요","첫 PT 오던 날 vs 지금","회원님이 가장 많이 하는 질문","같이 운동하면 뭐가 달라질까"]},
+  {tag:"Q&A",      fmt:"스토리",   pool:["유산소 먼저? 근력 먼저?","여자도 웨이트하면 근육 커질까?","공복 유산소 효과 있을까?","운동 몇 개월이면 변화가 보일까?","쉬는 날에도 운동해야 할까?"]},
+  {tag:"비포&애프터",fmt:"카드뉴스",pool:["체형 변화 비포&애프터(동의받은 사진)","자세 교정 전/후 비교","3개월 루틴 요약 정리","숫자로 보는 변화(체중·둘레)","운동 습관 전/후 하루 비교"]},
+  {tag:"루틴 공개", fmt:"릴스",    pool:[`${COACH} 코치의 하루 운동 루틴`,"오늘의 등 운동 풀 루틴","30분 전신 순환 운동","힙업 집중 루틴 5가지","코어 10분 챌린지"]},
+];
+function generateCalendar(){
+  const days=[]; const shuffled={};
+  for(let i=0;i<30;i++){
+    const p=PILLARS[i%PILLARS.length];
+    shuffled[p.tag]=shuffled[p.tag]||shuffle(p.pool);
+    const idea=shuffled[p.tag][Math.floor(i/PILLARS.length)%p.pool.length];
+    days.push({day:i+1,tag:p.tag,fmt:p.fmt,idea});
+  }
+  DB._calendar=days; saveDB(); render();
+  setTimeout(()=>{const e=document.getElementById("calResult");if(e)e.scrollIntoView({behavior:"smooth"});},60);
+  toast("30일 캘린더 생성 ✓");
+}
+function calendarResultHTML(days){
+  const rows=days.map(d=>`<tr>
+    <td class="day">Day ${d.day}</td>
+    <td><span class="pill">${esc(d.tag)}</span></td>
+    <td><span class="fmt">${esc(d.fmt)}</span></td>
+    <td>${esc(d.idea)}</td>
+    <td class="no-print"><button class="cal-use" onclick='useTopicInContent(${JSON.stringify(d.idea)})'>콘텐츠 만들기 →</button></td>
+  </tr>`).join("");
+  return `<div class="result" id="calResult">
+    <div class="print-only print-head"><b>${COACH} 코치 · 30일 콘텐츠 캘린더</b></div>
+    <table class="cal"><tr><th>일차</th><th>유형</th><th>형식</th><th>콘텐츠 아이디어</th><th class="no-print"></th></tr>${rows}</table>
+    <div class="row-actions no-print">
+      <button class="btn btn-primary" onclick="window.print()">📄 PDF로 저장 / 인쇄</button>
+      <button class="btn btn-lime" onclick="copyCalendar()">📋 텍스트 복사</button>
+      <button class="btn btn-ghost" onclick="generateCalendar()">↻ 다시 생성</button>
+    </div>
+  </div>`;
+}
+function copyCalendar(){
+  const days=DB._calendar||[]; let t=`[${COACH} 코치] 30일 콘텐츠 캘린더\n`;
+  days.forEach(d=>{t+=`Day ${d.day} · ${d.tag}(${d.fmt}) : ${d.idea}\n`;});
+  copyText(t,"캘린더 복사");
+}
+function useTopicInContent(topic){ go('content'); setTimeout(()=>{const el=document.getElementById('ctTopic'); if(el){el.value=topic; el.focus();}},60); }
+function viewCalendar(){
+  const has=DB._calendar&&DB._calendar.length;
+  return `<h1 class="page-title">30일 콘텐츠 캘린더</h1>
+    <p class="page-sub">한 달치 인스타 포스팅 아이디어를 유형별로 자동으로 짜드려요. 마음에 드는 아이디어는 바로 콘텐츠로 만들 수 있어요.</p>
+    <div class="card no-print">
+      <h3>📅 캘린더 만들기</h3>
+      <p style="color:var(--text-dim);font-size:13px;margin:0 0 4px;">운동 팁 · 자세교정 · 식단 · 동기부여 · 고객스토리 · Q&A · 비포애프터 · 루틴, 8가지 유형을 골고루 섞어 30일을 채워요.</p>
+      <div class="row-actions"><button class="btn btn-primary" onclick="generateCalendar()">⚡ 30일 캘린더 생성</button></div>
+    </div>
+    ${has?calendarResultHTML(DB._calendar):""}`;
+}
+
+/* =========================================================
+   6) FAQ 챗봇 (규칙 기반 · 키워드 매칭)
+   ========================================================= */
+const FAQ_KB=[
+  {k:["단백질","프로틴","보충제","단백"], a:"단백질은 체중 1kg당 하루 1.2~2g 정도가 목표예요. 보충제는 '식사로 부족할 때 채우는 용도'지 필수는 아니에요 😊 끼니에서 닭가슴살·계란·두부·생선을 먼저 챙기고, 부족한 만큼만 프로틴으로 보충하면 충분해요!"},
+  {k:["스쿼트","무릎"], a:"스쿼트할 때 무릎이 아프면 대부분 무릎이 안쪽으로 모이거나, 발끝보다 무릎이 과하게 나가는 경우예요. 발은 어깨너비, 무릎은 발끝 방향, 엉덩이를 뒤로 빼면서 앉아보세요. 통증이 계속되면 무게를 줄이고 가동범위부터 잡아야 해요."},
+  {k:["유산소","체지방","살빼","살 빼","다이어트"], a:"체지방을 빼려면 근력운동으로 근육을 지키면서 유산소는 '무리 없이 꾸준히'가 핵심이에요. 순서는 근력 먼저 → 유산소가 좋아요. 공복 유산소는 필수가 아니고 컨디션에 맞추면 돼요 😊"},
+  {k:["정체기","안빠져","안빠지","변화없","제자리"], a:"정체기는 몸이 적응했다는 신호예요! 여기선 ①운동 강도·종목 변화 ②수면·식사 점검 ③유산소 살짝 추가, 이 세 가지를 손봐주면 다시 움직여요. 조급해하지 마세요, 계단식으로 옵니다 💪"},
+  {k:["식단","뭐먹","먹어야","먹을","무엇을 먹"], a:"식단은 '완벽'보다 '지속'이에요. 단백질을 매 끼니 챙기고, 탄수는 통곡물 위주로, 채소는 넉넉히. 극단적으로 굶으면 요요가 와요. 잘 먹으면서 빼는 방향으로 가요 😊"},
+  {k:["통증","아파","아픔","부상","다쳤","결림"], a:"운동 중 통증은 절대 참지 마세요. 통증이 있으면 그 동작은 멈추고, 붓거나 지속되면 병원·물리치료사 진료를 먼저 받아야 해요. 회복이 우선이고, 그 사이 다칠 위험 없는 부위 위주로 운동을 조정해드릴게요."},
+  {k:["몇번","주 몇","빈도","횟수","며칠"], a:"초보자는 주 3회면 충분히 좋아요! 근육이 회복할 시간이 필요하거든요. 익숙해지면 4~5회로 늘리거나 부위를 나눠서 하면 돼요. 매일 무리하는 것보다 '꾸준히 3회'가 훨씬 효과적이에요 😊"},
+  {k:["여자","여성","근육 커","울퉁","우락부락"], a:"여성분들이 웨이트한다고 몸이 우락부락해지진 않아요! 호르몬 차이 때문에 그렇게 되려면 정말 오랜 시간과 특별한 훈련·식단이 필요해요. 오히려 탄탄하고 라인 예쁜 몸은 근력운동으로 만들어져요 💪"},
+  {k:["언제","변화","효과","얼마나","몇개월","몇 개월"], a:"보통 본인은 4주쯤 컨디션·힘의 변화를 먼저 느끼고, 눈에 띄는 몸 변화는 8~12주부터 나와요. 2~4주마다 사진으로 기록해두면 변화가 훨씬 잘 보여요 😊 조급함은 금물!"},
+  {k:["쉬는날","휴식","쉬어도","회복","자도"], a:"쉬는 날도 운동만큼 중요해요! 근육은 쉴 때 자라거든요. 완전히 눕기보다 가볍게 걷기·스트레칭 같은 액티브 리커버리를 하면 회복이 더 빨라요. 잠도 푹 주무세요 😴"},
+];
+let faqLog=[{role:"bot",text:`안녕하세요! ${COACH} 코치의 AI 도우미예요 🤖\n운동·식단·자세·통증 등 궁금한 걸 편하게 물어보세요.\n(예: "단백질 얼마나 먹어요?", "스쿼트 무릎이 아파요")`}];
+function faqAnswer(q){
+  const text=q.toLowerCase(); let best=null,score=0;
+  FAQ_KB.forEach(it=>{ let s=0; it.k.forEach(kw=>{ if(text.includes(kw.toLowerCase())) s++; }); if(s>score){score=s;best=it;} });
+  if(best&&score>0) return best.a+`\n\n※ 일반적인 정보예요. 통증·질환이 있으면 무리하지 말고 ${COACH} 코치나 전문의와 상담하세요!`;
+  return `좋은 질문이에요! 이건 ${COACH} 코치가 직접 답해드리는 게 정확할 것 같아요 😊\n조금 더 구체적으로(부위·운동 이름·상황) 물어봐 주시거나, 코치에게 직접 문의해 주세요!`;
+}
+function faqSend(preset){
+  const inp=document.getElementById("faqInput");
+  const q=(preset!==undefined?preset:(inp?inp.value:"")).trim();
+  if(!q) return;
+  faqLog.push({role:"me",text:q});
+  faqLog.push({role:"bot",text:faqAnswer(q)});
+  if(inp) inp.value="";
+  renderFaqLog();
+}
+function renderFaqLog(){
+  const box=document.getElementById("faqChat"); if(!box) return;
+  box.innerHTML=faqLog.map(m=>`<div class="msg ${m.role==='me'?'me':'bot'}">${esc(m.text)}</div>`).join("");
+  box.scrollTop=box.scrollHeight;
+}
+function viewFaq(){
+  const quick=["단백질 얼마나 먹어요?","스쿼트 무릎이 아파요","정체기가 왔어요","주 몇 번 해야 해요?","여자도 근육 커지나요?"];
+  return `<h1 class="page-title">FAQ 챗봇</h1>
+    <p class="page-sub">폼·식단·통증 등 자주 묻는 질문에 ${COACH} 코치 말투로 답하는 도우미예요. 고객에게 링크로 공유해도 좋아요.</p>
+    <div class="card">
+      <div class="chat" id="faqChat"></div>
+      <div class="qbtns">${quick.map(q=>`<button class="qbtn" onclick='faqSend(${JSON.stringify(q)})'>${esc(q)}</button>`).join("")}</div>
+      <div class="chat-in">
+        <input type="text" id="faqInput" placeholder="궁금한 걸 입력하세요…" onkeydown="if(event.key==='Enter')faqSend()" />
+        <button class="btn btn-primary" onclick="faqSend()">보내기</button>
+      </div>
+      <div class="disclaimer">⚠️ 규칙 기반 자동 응답이라 일반적인 안내예요. 통증·질환·개인 맞춤 상담은 ${COACH} 코치·전문의를 통해 확인하세요. (추후 GPT/Gemini 연동으로 더 똑똑하게 업그레이드 가능)</div>
+    </div>`;
+}
+
+/* ---------- 라우터 ---------- */
+function render(){
+  const el=document.getElementById("content");
+  if(activeTab==="clients") el.innerHTML=viewClients();
+  else if(activeTab==="program") el.innerHTML=viewProgram();
+  else if(activeTab==="content") el.innerHTML=viewContent();
+  else if(activeTab==="checkin") el.innerHTML=viewCheckin();
+  else if(activeTab==="calendar") el.innerHTML=viewCalendar();
+  else if(activeTab==="faq") el.innerHTML=viewFaq();
+  renderNav();
+  if(activeTab==="faq") renderFaqLog();
+  if(activeTab==="program") setTimeout(refreshDoneStatus,50);
+}
+
+/* ---------- 초기화 ---------- */
+initCloud();
+document.getElementById("clientModal").addEventListener("click",e=>{ if(e.target.id==="clientModal") closeModal(); });
+document.getElementById("recModal").addEventListener("click",e=>{ if(e.target.id==="recModal") e.currentTarget.classList.remove("show"); });
+document.getElementById("brandPre").textContent = COACH+" 코치의";
+document.getElementById("brandName").textContent = BRAND_NAME;
+document.getElementById("lockTitle").textContent = BRAND_NAME;
+document.title = COACH+" 코치의 "+BRAND_NAME;
+document.getElementById("loginPw").addEventListener("keydown",e=>{ if(e.key==="Enter") tryLogin(); });
+
+if(cloudOn && auth){
+  // 정식 로그인 필요 (이메일/비밀번호)
+  auth.onAuthStateChanged(user=>{
+    currentUser=user;
+    const fl=document.getElementById("logoutLink"), fu=document.getElementById("footUser");
+    if(user){
+      document.getElementById("lockScreen").style.display="none";
+      if(fl) fl.style.display="inline"; if(fu) fu.textContent=(user.email||"")+" · ";
+      bootData();
+    }else{
+      if(fl) fl.style.display="none"; if(fu) fu.textContent="";
+      document.getElementById("lockScreen").style.display="flex";
+      setTimeout(()=>{const el=document.getElementById("loginEmail"); if(el) el.focus();},100);
+    }
+  });
+}else{
+  // Firebase 미설정: 로컬 전용 (로그인 없이 동작)
+  document.getElementById("lockScreen").style.display="none";
+  bootData();
+}
+</script>
+</body>
+</html>
