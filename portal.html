@@ -120,7 +120,7 @@ function programHTML(p){
     const days=w.days.map(d=>{
       const dayKey="w"+w.week+"d"+d.day;
       const items=[];
-      d.exercises.forEach(e=>items.push({label:esc(e.name), sub:esc(e.part)+" · "+d.sets+"세트 · "+esc(d.rep)}));
+      d.exercises.forEach(e=>{ const s=e.sets!=null?e.sets:(d.sets+"세트"), r=e.reps!=null?e.reps:d.rep; items.push({label:esc(e.name), sub:(e.part?esc(e.part)+" · ":"")+esc(String(s))+" · "+esc(r)}); });
       if(d.cardio) items.push({label:"유산소 · "+d.cardio.moves.map(esc).join(" / "), sub:d.cardio.rounds+"라운드"});
       const keys=items.map((_,i)=>dayKey+"i"+i);
       state.days.push({dayKey, keys});
