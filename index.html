@@ -244,6 +244,43 @@
   .fbitem img{max-width:180px;border-radius:8px;margin-top:8px;display:block;cursor:pointer;}
   .fbitem .m{font-size:11px;color:var(--text-mute);margin-bottom:5px;display:flex;align-items:center;gap:8px;}
 
+  /* ===== PT 일정 (수업 시간표) ===== */
+  .sched-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .sched-title{font-size:16px;font-weight:900;letter-spacing:-.3px;min-width:120px;}
+  .sched-nav{display:flex;gap:6px;align-items:center;}
+  .sched-view-toggle{margin-left:auto;display:flex;gap:6px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .cal-dow{text-align:center;font-size:11.5px;font-weight:800;color:var(--text-dim);padding:4px 0;}
+  .cal-dow.sun{color:#ff7a90;} .cal-dow.sat{color:#6fb8ff;}
+  .cal-cell{position:relative;min-height:62px;background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;padding:6px 7px;cursor:pointer;transition:.12s;display:flex;flex-direction:column;gap:4px;}
+  .cal-cell:hover{border-color:var(--brand-primary);}
+  .cal-cell.blank{background:transparent;border:0;cursor:default;}
+  .cal-cell.today{box-shadow:inset 0 0 0 1.5px var(--brand-accent);}
+  .cal-cell.sel{border-color:var(--brand-primary);box-shadow:inset 0 0 0 1.5px var(--brand-primary);background:rgba(255,106,26,.08);}
+  .cal-date{font-size:12.5px;font-weight:700;color:var(--text);}
+  .cal-cell.sun .cal-date{color:#ff7a90;} .cal-cell.sat .cal-date{color:#6fb8ff;}
+  .cal-cnt{font-size:10.5px;font-weight:800;color:#14210a;background:var(--brand-accent);border-radius:20px;padding:1px 7px;align-self:flex-start;}
+  .cal-dots{display:flex;flex-wrap:wrap;gap:3px;margin-top:auto;}
+  .cal-dot{width:6px;height:6px;border-radius:50%;background:var(--brand-primary);}
+  .ses-list{display:flex;flex-direction:column;gap:9px;}
+  .ses-item{display:flex;align-items:center;gap:12px;background:var(--bg-soft);border:1px solid var(--line);border-left:3px solid var(--brand-primary);border-radius:0 12px 12px 0;padding:11px 13px;}
+  .ses-time{font-size:15px;font-weight:900;color:var(--brand-primary);min-width:52px;font-variant-numeric:tabular-nums;}
+  .ses-body{min-width:0;flex:1;cursor:pointer;}
+  .ses-name{font-size:14.5px;font-weight:800;}
+  .ses-name .arrow{font-size:12px;color:var(--brand-primary);font-weight:700;margin-left:6px;}
+  .ses-sub{font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .ses-memo{font-size:12.5px;color:var(--text-dim);}
+  .wk-row{display:flex;gap:10px;align-items:flex-start;background:var(--bg-soft);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px;}
+  .wk-row.today{box-shadow:inset 0 0 0 1.5px var(--brand-accent);}
+  .wk-date{min-width:70px;font-size:12.5px;font-weight:800;}
+  .wk-date .wk-dow{display:block;font-size:11px;color:var(--text-dim);font-weight:600;}
+  .wk-date.sun{color:#ff7a90;} .wk-date.sat{color:#6fb8ff;}
+  .wk-chips{display:flex;flex-wrap:wrap;gap:6px;flex:1;}
+  .wk-chip{font-size:12px;font-weight:700;background:var(--card-2);border:1px solid var(--line);border-radius:20px;padding:4px 11px;cursor:pointer;}
+  .wk-chip:hover{border-color:var(--brand-primary);color:#fff;}
+  .wk-chip b{color:var(--brand-primary);}
+  .wk-empty{font-size:12px;color:var(--text-mute);padding:3px 0;}
+
   /* ===== 코치 앱 잠금(비밀번호) ===== */
   .lockscreen{position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,#12141a,#0b0d11);display:flex;align-items:center;justify-content:center;padding:20px;}
   .lockbox{width:100%;max-width:360px;text-align:center;}
@@ -424,6 +461,15 @@ function cloudDelete(clientId){
   try{ cloud.collection("clients").doc(clientId).delete().catch(()=>{}); }catch(e){}
   try{ cloud.collection("completions").doc(clientId).delete().catch(()=>{}); }catch(e){}
 }
+/* ---------- PT 일정: 클라우드 동기화 ---------- */
+function sessionMirror(s){
+  if(!cloudOn||!s) return;
+  try{ cloud.collection("sessions").doc(s.id).set(s,{merge:true}).catch(e=>console.warn("session set",e)); }catch(e){}
+}
+function sessionDelCloud(id){
+  if(!cloudOn||!id) return;
+  try{ cloud.collection("sessions").doc(id).delete().catch(()=>{}); }catch(e){}
+}
 function portalLink(id){ let b=location.href.split("#")[0].split("?")[0]; b=b.replace(/[^/]*$/,""); return b+"portal.html?id="+id; }
 function copyPortalLink(id){
   if(!cloudOn) toast("먼저 Firebase 설정이 필요해요 (가이드 참고)");
@@ -455,7 +501,16 @@ async function loadFromCloud(){
     qs.forEach(s=>{ const d=s.data(); ids.add(s.id); if(d.profile)cClients.push(d.profile); if(d.program)cPrograms[s.id]=d.program; if(d.records)cRecords[s.id]=d.records; });
     // 이 브라우저에만 있던 고객은 클라우드로 올리고 목록에 유지 (데이터 유실 방지)
     DB.clients.forEach(c=>{ if(!ids.has(c.id)){ cClients.push(c); if(DB.programs[c.id])cPrograms[c.id]=DB.programs[c.id]; if(DB.records&&DB.records[c.id])cRecords[c.id]=DB.records[c.id]; cloudPublish(c.id); } });
-    DB.clients=cClients; DB.programs=cPrograms; DB.records=cRecords; saveDB();
+    DB.clients=cClients; DB.programs=cPrograms; DB.records=cRecords;
+    // PT 일정 불러오기
+    try{
+      const ss=await cloud.collection("sessions").get();
+      const cSes=[], sids=new Set();
+      ss.forEach(s=>{ const d=s.data()||{}; d.id=s.id; cSes.push(d); sids.add(s.id); });
+      (DB.sessions||[]).forEach(s=>{ if(!sids.has(s.id)){ cSes.push(s); sessionMirror(s); } });
+      DB.sessions=cSes;
+    }catch(e){ console.warn("cloud sessions load",e); }
+    saveDB();
   }catch(e){ console.warn("cloud load",e); }
 }
 async function reloadClients(){
@@ -469,12 +524,13 @@ async function bootData(){
 
 /* ---------- 저장소 ---------- */
 function loadDB(){
-  try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {clients:[], programs:{}, contents:[], records:{}}; }
-  catch(e){ return {clients:[], programs:{}, contents:[], records:{}}; }
+  try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {clients:[], programs:{}, contents:[], records:{}, sessions:[]}; }
+  catch(e){ return {clients:[], programs:{}, contents:[], records:{}, sessions:[]}; }
 }
 function saveDB(){ localStorage.setItem(STORE_KEY, JSON.stringify(DB)); }
 let DB = loadDB();
 DB.records = DB.records || {};
+DB.sessions = DB.sessions || [];
 let currentClientId = null;   // 탭 간 공유되는 선택 고객
 let activeTab = "clients";
 
@@ -496,6 +552,7 @@ function copyText(txt,label){
 /* ---------- 탭 정의 ---------- */
 const TABS = [
   {id:"clients",  name:"고객 관리",     ic:"👥"},
+  {id:"schedule", name:"PT 일정",       ic:"🗓️"},
   {id:"content",  name:"인스타 콘텐츠", ic:"📱"},
   {id:"checkin",  name:"주간 체크인",   ic:"💬"},
   {id:"calendar", name:"콘텐츠 캘린더", ic:"📅"},
@@ -566,7 +623,7 @@ function viewClients(){
     </div>`;
 }
 let openMember=null, detailSection="program";
-function openMemberDetail(id){ currentClientId=id; openMember=id; detailSection="program"; render(); }
+function openMemberDetail(id,sec){ currentClientId=id; openMember=id; detailSection=sec||"program"; activeTab="clients"; renderNav(); render(); window.scrollTo(0,0); }
 function closeMemberDetail(){ openMember=null; render(); }
 function setDetailSection(s){ detailSection=s; render(); }
 function memberDetailView(c){
@@ -1431,12 +1488,186 @@ function delFeedback(cid, id){
   cloud.collection("feedback").doc(cid).collection("items").doc(id).delete().then(()=>loadFeedback()).catch(()=>{});
 }
 
+/* =========================================================
+   8) PT 일정 (수업 시간표) — 캘린더 + 회원 바로가기
+   ========================================================= */
+let schedYM=null;          // {y, m(0~11)} 표시 중인 달
+let schedSel=null;         // 선택 날짜 'YYYY-MM-DD'
+let schedView="month";     // 'month' | 'week'
+let schedWeekStart=null;   // 주간 보기 시작일(일요일) Date
+
+function pad2(n){ return (n<10?"0":"")+n; }
+function ymd(y,m,d){ return y+"-"+pad2(m+1)+"-"+pad2(d); }
+function ymdOf(dt){ return ymd(dt.getFullYear(), dt.getMonth(), dt.getDate()); }
+function todayYMD(){ const d=new Date(); return ymdOf(d); }
+function parseYMD(s){ const p=(s||"").split("-"); return new Date(+p[0], (+p[1])-1, +p[2]); }
+const DOW_KR=["일","월","화","수","목","금","토"];
+function fmtNiceDate(s){ const d=parseYMD(s); return `${d.getMonth()+1}월 ${d.getDate()}일 (${DOW_KR[d.getDay()]})`; }
+function clientName(id){ const c=DB.clients.find(x=>x.id===id); return c?c.name:"(삭제된 회원)"; }
+function clientGoal(id){ const c=DB.clients.find(x=>x.id===id); return c?c.goal:""; }
+
+function initSched(){
+  if(!schedYM){ const d=new Date(); schedYM={y:d.getFullYear(), m:d.getMonth()}; }
+  if(!schedSel) schedSel=todayYMD();
+  if(!schedWeekStart){ const d=parseYMD(schedSel); d.setDate(d.getDate()-d.getDay()); schedWeekStart=d; }
+}
+function sessionsOn(dateStr){
+  return (DB.sessions||[]).filter(s=>s.date===dateStr).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+}
+function schedMonthMove(delta){
+  let y=schedYM.y, m=schedYM.m+delta;
+  if(m<0){ m=11; y--; } if(m>11){ m=0; y++; }
+  schedYM={y,m}; render();
+}
+function schedGoToday(){ const d=new Date(); schedYM={y:d.getFullYear(),m:d.getMonth()}; schedSel=todayYMD(); const w=parseYMD(schedSel); w.setDate(w.getDate()-w.getDay()); schedWeekStart=w; render(); }
+function schedPick(dateStr){ schedSel=dateStr; render(); setTimeout(()=>{const e=document.getElementById("dayPanel"); if(e) e.scrollIntoView({behavior:"smooth",block:"nearest"});},50); }
+function schedSetView(v){ schedView=v; if(v==="week" && schedSel){ const d=parseYMD(schedSel); d.setDate(d.getDate()-d.getDay()); schedWeekStart=d; } render(); }
+function weekMove(delta){ const d=new Date(schedWeekStart); d.setDate(d.getDate()+delta*7); schedWeekStart=d; render(); }
+
+function addSessionFromForm(){
+  const date=document.getElementById("sesDate").value;
+  const time=document.getElementById("sesTime").value;
+  const cid=document.getElementById("sesClient").value;
+  const memo=document.getElementById("sesMemo").value.trim();
+  if(!cid){ toast("회원을 선택하세요"); return; }
+  if(!date){ toast("날짜를 입력하세요"); return; }
+  const s={id:uid(), clientId:cid, date, time:time||"", memo, ts:Date.now()};
+  DB.sessions=DB.sessions||[]; DB.sessions.push(s); saveDB(); sessionMirror(s);
+  schedSel=date;
+  const d=parseYMD(date); schedYM={y:d.getFullYear(),m:d.getMonth()};
+  document.getElementById("sesMemo").value="";
+  render(); toast("일정 등록 ✓");
+}
+function delSession(id){
+  DB.sessions=(DB.sessions||[]).filter(s=>s.id!==id); saveDB(); sessionDelCloud(id); render(); toast("일정 삭제됨");
+}
+
+function monthGridHTML(){
+  const {y,m}=schedYM;
+  const first=new Date(y,m,1), startDow=first.getDay();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const tStr=todayYMD();
+  let cells="";
+  const dows=["일","월","화","수","목","금","토"];
+  cells += dows.map((dn,i)=>`<div class="cal-dow ${i===0?'sun':(i===6?'sat':'')}">${dn}</div>`).join("");
+  for(let i=0;i<startDow;i++) cells+=`<div class="cal-cell blank"></div>`;
+  for(let d=1; d<=daysInMonth; d++){
+    const ds=ymd(y,m,d); const dow=new Date(y,m,d).getDay();
+    const list=sessionsOn(ds); const n=list.length;
+    const cls=[dow===0?'sun':(dow===6?'sat':''), ds===tStr?'today':'', ds===schedSel?'sel':''].filter(Boolean).join(" ");
+    const dots = n>0 ? `<div class="cal-dots">${list.slice(0,4).map(()=>'<span class="cal-dot"></span>').join("")}${n>4?'<span style="font-size:9px;color:var(--text-dim)">+'+(n-4)+'</span>':''}</div>` : "";
+    const cnt = n>0 ? `<span class="cal-cnt">${n}</span>` : "";
+    cells += `<div class="cal-cell ${cls}" onclick="schedPick('${ds}')"><span class="cal-date">${d}</span>${cnt}${dots}</div>`;
+  }
+  return `<div class="cal-grid">${cells}</div>`;
+}
+
+function daySessionsHTML(dateStr){
+  const list=sessionsOn(dateStr);
+  const inner = list.length ? `<div class="ses-list">`+list.map(s=>{
+      const nm=clientName(s.clientId), g=clientGoal(s.clientId);
+      return `<div class="ses-item">
+        <div class="ses-time">${esc(s.time||"—")}</div>
+        <div class="ses-body" onclick="openMemberDetail('${s.clientId}')">
+          <div class="ses-name">${esc(nm)}<span class="arrow">프로그램·식단 보기 →</span></div>
+          <div class="ses-sub">${g?"🎯 "+esc(g):""}${s.memo?(g?" · ":"")+"📝 "+esc(s.memo):""}</div>
+        </div>
+        <button class="btn btn-danger btn-sm" style="padding:5px 10px;" onclick="delSession('${s.id}')">삭제</button>
+      </div>`;
+    }).join("")+`</div>`
+    : `<div class="empty" style="padding:26px 12px;"><div class="big">🗓️</div>이 날짜에 등록된 수업이 없어요.<br/>아래에서 회원과 시간을 추가해 보세요.</div>`;
+  return `<div class="card" id="dayPanel"><h3>📌 ${fmtNiceDate(dateStr)} 수업 (${list.length})</h3>${inner}</div>`;
+}
+
+function weekViewHTML(){
+  const start=new Date(schedWeekStart);
+  const end=new Date(start); end.setDate(end.getDate()+6);
+  const label=`${start.getMonth()+1}.${start.getDate()} ~ ${end.getMonth()+1}.${end.getDate()}`;
+  const tStr=todayYMD();
+  let rows="";
+  for(let i=0;i<7;i++){
+    const dt=new Date(start); dt.setDate(dt.getDate()+i);
+    const ds=ymdOf(dt); const list=sessionsOn(ds);
+    const dcls=[dt.getDay()===0?'sun':(dt.getDay()===6?'sat':''), ds===tStr?'today':''].filter(Boolean).join(" ");
+    const chips=list.length ? list.map(s=>`<span class="wk-chip" onclick="openMemberDetail('${s.clientId}')"><b>${esc(s.time||"—")}</b> ${esc(clientName(s.clientId))} →</span>`).join("")
+      : `<span class="wk-empty">수업 없음</span>`;
+    rows += `<div class="wk-row ${ds===tStr?'today':''}">
+      <div class="wk-date ${dcls}">${dt.getMonth()+1}.${dt.getDate()}<span class="wk-dow">${DOW_KR[dt.getDay()]}요일</span></div>
+      <div class="wk-chips">${chips}</div></div>`;
+  }
+  return `<div class="sched-top">
+      <div class="sched-nav">
+        <button class="btn btn-ghost btn-sm" onclick="weekMove(-1)">‹ 이전 주</button>
+        <button class="btn btn-ghost btn-sm" onclick="schedGoToday()">오늘</button>
+        <button class="btn btn-ghost btn-sm" onclick="weekMove(1)">다음 주 ›</button>
+      </div>
+      <div class="sched-title" style="min-width:0;">${label}</div>
+      <div class="sched-view-toggle">
+        <button class="btn btn-ghost btn-sm" onclick="schedSetView('month')">📅 월간</button>
+        <button class="btn btn-primary btn-sm" onclick="schedSetView('week')">🗓️ 주간</button>
+      </div>
+    </div>
+    <div class="card">${rows}</div>`;
+}
+
+function sessionFormHTML(){
+  if(DB.clients.length===0) return "";
+  const opts=DB.clients.map(c=>`<option value="${c.id}" ${c.id===currentClientId?"selected":""}>${esc(c.name)} · ${esc(c.goal)}</option>`).join("");
+  return `<div class="card no-print">
+    <h3>➕ 수업 일정 추가</h3>
+    <div class="grid g3">
+      <div><label class="fld">회원</label><select id="sesClient">${opts}</select></div>
+      <div><label class="fld">날짜</label><input type="date" id="sesDate" value="${schedSel}" /></div>
+      <div><label class="fld">시간</label><input type="time" id="sesTime" value="10:00" /></div>
+    </div>
+    <div style="margin-top:12px;"><label class="fld">메모 (선택)</label>
+      <input type="text" id="sesMemo" placeholder="예) 하체 집중 / 인바디 측정 / 30분" /></div>
+    <div class="row-actions"><button class="btn btn-primary" onclick="addSessionFromForm()">일정 추가</button></div>
+  </div>`;
+}
+
+function viewSchedule(){
+  initSched();
+  if(DB.clients.length===0){
+    return `<h1 class="page-title">PT 일정</h1>
+      <p class="page-sub">회원별 수업 시간을 달력에 등록하고, 날짜를 눌러 그날 수업을 한눈에 봐요.</p>
+      <div class="card"><div class="empty"><div class="big">🗓️</div>먼저 <b>고객 관리</b>에서 회원을 등록해 주세요.</div>
+      <div class="row-actions" style="justify-content:center"><button class="btn btn-primary" onclick="go('clients')">회원 등록하러 가기</button></div></div>`;
+  }
+  if(schedView==="week"){
+    return `<h1 class="page-title">PT 일정</h1>
+      <p class="page-sub">한 주 수업을 한눈에. 회원을 누르면 그 회원의 운동 프로그램·식단으로 바로 이동해요.</p>
+      ${weekViewHTML()}${sessionFormHTML()}`;
+  }
+  const {y,m}=schedYM;
+  return `<h1 class="page-title">PT 일정</h1>
+    <p class="page-sub">달력에서 날짜를 누르면 그날 수업이 아래에 나와요. 회원을 누르면 운동 프로그램·식단으로 바로 이동해요.</p>
+    <div class="card no-print">
+      <div class="sched-top">
+        <div class="sched-nav">
+          <button class="btn btn-ghost btn-sm" onclick="schedMonthMove(-1)">‹</button>
+          <button class="btn btn-ghost btn-sm" onclick="schedGoToday()">오늘</button>
+          <button class="btn btn-ghost btn-sm" onclick="schedMonthMove(1)">›</button>
+        </div>
+        <div class="sched-title">${y}년 ${m+1}월</div>
+        <div class="sched-view-toggle">
+          <button class="btn btn-primary btn-sm" onclick="schedSetView('month')">📅 월간</button>
+          <button class="btn btn-ghost btn-sm" onclick="schedSetView('week')">🗓️ 주간</button>
+        </div>
+      </div>
+      ${monthGridHTML()}
+    </div>
+    ${daySessionsHTML(schedSel)}
+    ${sessionFormHTML()}`;
+}
+
 /* ---------- 라우터 ---------- */
 function render(){
   const el=document.getElementById("content");
   if(activeTab==="clients"){
     el.innerHTML = openMember ? memberDetailView(DB.clients.find(x=>x.id===openMember)) : viewClients();
   }
+  else if(activeTab==="schedule") el.innerHTML=viewSchedule();
   else if(activeTab==="content") el.innerHTML=viewContent();
   else if(activeTab==="checkin") el.innerHTML=viewCheckin();
   else if(activeTab==="calendar") el.innerHTML=viewCalendar();
