@@ -149,6 +149,9 @@
   table.prog th,table.prog td{padding:9px 12px;text-align:left;border-top:1px solid var(--line);}
   table.prog th{color:var(--text-dim);font-weight:600;font-size:11.5px;background:rgba(255,255,255,.02);}
   table.prog td.c{text-align:center;white-space:nowrap;}
+  table.prog th.chk-h{width:30px;text-align:center;color:var(--ok);}
+  table.prog td.chk{width:30px;text-align:center;font-size:13px;padding-left:8px;padding-right:6px;}
+  table.prog td.chk.done{background:rgba(55,214,122,.1);}
   .daychip{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--brand-primary);color:#fff;font-weight:700;}
 
   .out-block{margin-bottom:16px;}
@@ -311,6 +314,7 @@
     .day-block{page-break-inside:avoid;break-inside:avoid;border:1px solid #ccc !important;border-radius:10px;padding:8px 10px !important;background:#fff !important;}
     .day-block .daychip{color:#fff !important;background:#FF6A1A !important;}
     table.prog{font-size:10px;}
+    table.prog td.chk,table.prog th.chk-h{display:none;}
     table.prog th,table.prog td{padding:4px 6px;border-top:1px solid #e6e6e6 !important;}
     table.prog th{color:#666 !important;background:#f7f7f7 !important;}
     .pill{border:1px solid #ddd !important;color:#555 !important;background:#f4f4f4 !important;}
@@ -350,10 +354,10 @@
   </div>
 </div>
 
-<!-- 고객 등록/수정 모달 -->
+<!-- 회원 등록/수정 모달 -->
 <div class="modal-bg" id="clientModal">
   <div class="modal">
-    <h3 id="cmTitle">고객 등록</h3>
+    <h3 id="cmTitle">회원 등록</h3>
     <input type="hidden" id="cmId" />
     <div class="grid g2">
       <div><label class="fld">이름 *</label><input type="text" id="cmName" placeholder="예) 김지은" /></div>
@@ -395,7 +399,7 @@
   <div class="modal">
     <h3 id="rcTitle">진행 기록</h3>
     <input type="hidden" id="rcClientId" />
-    <p style="color:var(--text-dim);font-size:12.5px;margin:-6px 0 12px;">여기 남긴 기록은 고객 포털에서 고객이 볼 수 있어요.</p>
+    <p style="color:var(--text-dim);font-size:12.5px;margin:-6px 0 12px;">여기 남긴 기록은 고객 포털에서 회원이 볼 수 있어요.</p>
     <div class="grid g2">
       <div><label class="fld">날짜/시점</label><input type="text" id="rcDate" placeholder="예) 3주차 / 3월 2일" /></div>
       <div><label class="fld">항목 (선택)</label><input type="text" id="rcTag" placeholder="예) 인바디 / 피드백" /></div>
@@ -551,7 +555,7 @@ function copyText(txt,label){
 
 /* ---------- 탭 정의 ---------- */
 const TABS = [
-  {id:"clients",  name:"고객 관리",     ic:"👥"},
+  {id:"clients",  name:"회원 관리",     ic:"👥"},
   {id:"schedule", name:"PT 일정",       ic:"🗓️"},
   {id:"content",  name:"인스타 콘텐츠", ic:"📱"},
   {id:"checkin",  name:"주간 체크인",   ic:"💬"},
@@ -580,17 +584,17 @@ function clientBarHTML(){
   const cur = DB.clients.find(c=>c.id===currentClientId);
   return `<div class="clientbar no-print">
     <div class="avatar">${esc(initial(cur?cur.name:"?"))}</div>
-    <div style="font-size:12.5px;color:var(--text-dim)">작업 대상 고객</div>
+    <div style="font-size:12.5px;color:var(--text-dim)">작업 대상 회원</div>
     <select onchange="currentClientId=this.value; render();">${opts}</select>
   </div>`;
 }
 
 /* =========================================================
-   1) 고객 관리
+   1) 회원 관리
    ========================================================= */
 function viewClients(){
   const list = DB.clients.length===0
-    ? `<div class="empty"><div class="big">👥</div>아직 등록된 고객이 없어요.<br/>첫 고객을 등록하면 모든 탭에서 불러 쓸 수 있어요.</div>`
+    ? `<div class="empty"><div class="big">👥</div>아직 등록된 회원이 없어요.<br/>첫 회원을 등록하면 모든 탭에서 불러 쓸 수 있어요.</div>`
     : `<div class="client-cards">`+DB.clients.map(c=>{
         return `<div class="ccard" onclick="openMemberDetail('${c.id}')">
           <div class="ccard-top">
@@ -611,13 +615,13 @@ function viewClients(){
     : `<span class="pill">⚪ 클라우드 설정 필요 — 가이드 참고</span>`;
 
   return `
-    <h1 class="page-title">고객 관리</h1>
-    <p class="page-sub">${cloudOn?"이 목록은 클라우드에 저장돼 코치·관리자가 같은 화면을 봐요.":"여기서 등록한 고객을 모든 탭에서 공유해서 써요."} <b>카드를 누르면</b> 그 회원이 '작업 대상'으로 선택돼요.</p>
+    <h1 class="page-title">회원 관리</h1>
+    <p class="page-sub">${cloudOn?"이 목록은 클라우드에 저장돼 코치·관리자가 같은 화면을 봐요.":"여기서 등록한 회원을 모든 탭에서 공유해서 써요."} <b>카드를 누르면</b> 그 회원이 '작업 대상'으로 선택돼요.</p>
     <div class="card">
-      <h3>👥 내 고객 (${DB.clients.length}) &nbsp; ${cloudStatus}</h3>
+      <h3>👥 내 회원 (${DB.clients.length}) &nbsp; ${cloudStatus}</h3>
       ${list}
       <div class="row-actions">
-        <button class="btn btn-primary" onclick="openClient()">+ 새 고객 등록</button>
+        <button class="btn btn-primary" onclick="openClient()">+ 새 회원 등록</button>
         ${cloudOn?`<button class="btn btn-ghost" onclick="reloadClients()">🔄 목록 새로고침</button>`:""}
       </div>
     </div>`;
@@ -652,7 +656,7 @@ function memberDetailView(c){
 
 function openClient(id){
   const c = id ? DB.clients.find(x=>x.id===id) : null;
-  document.getElementById("cmTitle").textContent = c?"고객 정보 수정":"고객 등록";
+  document.getElementById("cmTitle").textContent = c?"회원 정보 수정":"회원 등록";
   document.getElementById("cmId").value = c?c.id:"";
   document.getElementById("cmName").value = c?c.name:"";
   document.getElementById("cmAge").value = c?(c.age||""):"";
@@ -678,7 +682,7 @@ function saveClient(){
   saveDB(); cloudPublish(savedId); closeModal(); render(); toast("저장되었습니다 ✓");
 }
 function delClient(id){
-  if(!confirm("이 고객을 삭제할까요? 저장된 프로그램·기록도 함께 삭제됩니다.")) return;
+  if(!confirm("이 회원을 삭제할까요? 저장된 프로그램·기록도 함께 삭제됩니다.")) return;
   DB.clients=DB.clients.filter(c=>c.id!==id); delete DB.programs[id]; if(DB.records) delete DB.records[id];
   if(currentClientId===id) currentClientId=null;
   saveDB(); cloudDelete(id); render(); toast("삭제되었습니다");
@@ -819,7 +823,7 @@ function buildExerciseList(parts, equips, goal, level){
 
 function generateProgram(){
   const c = DB.clients.find(x=>x.id===currentClientId);
-  if(!c){ toast("먼저 고객을 선택/등록하세요"); return; }
+  if(!c){ toast("먼저 회원을 선택/등록하세요"); return; }
   const equips = window._equips && window._equips.length ? window._equips : ["맨몸"];
   const freq = parseInt(document.getElementById("pgFreq").value);
   const weeks = parseInt(document.getElementById("pgWeeks").value);
@@ -846,21 +850,23 @@ function generateProgram(){
   toast("프로그램이 생성되었습니다 ✓");
 }
 
-// 읽기용 한 Day
-function dayReadHTML(d, wi, di){
-  const exRows = d.exercises.map(e=>{
+// 읽기용 한 Day (chk 열: 회원이 포털에서 완료 체크하면 ✅ 실시간 반영)
+function dayReadHTML(d, wi, di, wk){
+  const dk = "w"+wk+"d"+d.day;
+  const exRows = d.exercises.map((e,ei)=>{
     const s=e.sets!=null?e.sets:(d.sets+"세트"), r=e.reps!=null?e.reps:d.rep, rt=e.rest!=null?e.rest:d.rest;
-    return `<tr><td><span class="pill">${esc(e.part||"")}</span></td><td>${esc(e.name)}</td>
+    return `<tr><td class="c chk" id="chk-${dk}i${ei}" title="회원 완료 여부">⚪</td><td><span class="pill">${esc(e.part||"")}</span></td><td>${esc(e.name)}</td>
     <td class="c">${esc(String(s))}</td><td class="c">${esc(r)}</td><td class="c">${esc(rt)}</td></tr>`;
   }).join("");
-  const cardio = d.cardio ? `<tr><td><span class="pill">유산소</span></td><td>${d.cardio.moves.map(esc).join(" / ")}</td><td class="c" colspan="3">${d.cardio.rounds}라운드 · 각 40초 운동 / 20초 휴식</td></tr>`:"";
+  const ci = d.exercises.length;
+  const cardio = d.cardio ? `<tr><td class="c chk" id="chk-${dk}i${ci}" title="회원 완료 여부">⚪</td><td><span class="pill">유산소</span></td><td>${d.cardio.moves.map(esc).join(" / ")}</td><td class="c" colspan="3">${d.cardio.rounds}라운드 · 각 40초 운동 / 20초 휴식</td></tr>`:"";
   return `<div class="day-block" style="padding:6px 14px 12px;">
     <div style="display:flex;align-items:center;gap:8px;margin:10px 0 6px;">
       <span class="daychip">DAY ${d.day}</span>
       <span style="font-weight:800;font-size:13px;flex:1;">${d.parts.map(esc).join(" · ")}</span>
       <button class="btn btn-ghost btn-sm no-print" onclick="startEditDay(${wi},${di})">✏️ 편집</button>
     </div>
-    <table class="prog"><tr><th>부위</th><th>운동</th><th>세트</th><th>반복</th><th>휴식</th></tr>${exRows}${cardio}</table>
+    <table class="prog"><tr><th class="chk-h">✓</th><th>부위</th><th>운동</th><th>세트</th><th>반복</th><th>휴식</th></tr>${exRows}${cardio}</table>
   </div>`;
 }
 // 편집용 한 Day (그 자리에서 바로 편집)
@@ -889,7 +895,7 @@ function dayEditHTML(dd){
 function programResultHTML(p, c){
   const rows = p.weeksArr.map((w,wi)=>{
     const dayTables = w.days.map((d,di)=>{
-      return (editWi===wi && editDi===di) ? dayEditHTML(dayDraft) : dayReadHTML(d, wi, di);
+      return (editWi===wi && editDi===di) ? dayEditHTML(dayDraft) : dayReadHTML(d, wi, di, w.week);
     }).join("");
     const head = editWeek===wi
       ? `<input type="text" id="wkTag" value="${esc(w.prog.tag)}" style="width:88px;font-size:12px;padding:6px 8px;"/>
@@ -923,7 +929,7 @@ function programResultHTML(p, c){
   </div>`;
 }
 
-/* 고객 완료 현황 (고객 포털에서 체크한 내용을 클라우드에서 읽어와 표시) */
+/* 회원 완료 현황 (고객 포털에서 체크한 내용을 클라우드에서 읽어와 표시) */
 function doneStatusHTML(p,comp){
   let totalDays=0,doneDays=0,partDays=0,totalEx=0,doneEx=0; const badges=[];
   p.weeksArr.forEach(w=>w.days.forEach(d=>{
@@ -936,19 +942,32 @@ function doneStatusHTML(p,comp){
     else if(dn>0){ partDays++; cls='color:#ffcf3f;border-color:rgba(255,207,63,.45);'; mark='🟡'; }
     badges.push(`<span class="pill" style="${cls}">${mark} ${w.week}주 D${d.day} <b>${dn}/${n}</b></span>`);
   }));
-  return `<div class="card"><h3>📊 고객 완료 현황</h3>
+  return `<div class="card"><h3>📊 회원 완료 현황</h3>
     <p style="font-size:14.5px;margin:0 0 5px;">완료 <b style="color:var(--ok)">${doneDays}일</b> · 진행 중 <b style="color:#ffcf3f">${partDays}일</b> · 미시작 ${totalDays-doneDays-partDays}일</p>
-    <p style="font-size:12.5px;color:var(--text-dim);margin:0 0 12px;">전체 운동 ${totalEx}개 중 <b>${doneEx}개</b> 완료 ${doneEx>0?'🔥':''} &nbsp;·&nbsp; 고객이 포털에서 체크하면 <b style="color:var(--ok)">실시간으로 자동 반영</b>돼요 ⚡</p>
+    <p style="font-size:12.5px;color:var(--text-dim);margin:0 0 12px;">전체 운동 ${totalEx}개 중 <b>${doneEx}개</b> 완료 ${doneEx>0?'🔥':''} &nbsp;·&nbsp; 회원이 포털에서 체크하면 <b style="color:var(--ok)">실시간으로 자동 반영</b>돼요 ⚡</p>
     <div class="chips">${badges.join("")}</div></div>`;
 }
-/* 실시간 감시: 고객이 포털에서 체크하는 즉시 자동 갱신 (onSnapshot) */
+/* 운동 목록 각 줄의 완료 표시(⚪/✅)를 완료 데이터로 갱신 */
+function updateExerciseChecks(p, comp){
+  p.weeksArr.forEach(w=>w.days.forEach(d=>{
+    const n=d.exercises.length+(d.cardio?1:0);
+    for(let i=0;i<n;i++){
+      const el=document.getElementById("chk-w"+w.week+"d"+d.day+"i"+i);
+      if(!el) continue;
+      const done=!!comp["w"+w.week+"d"+d.day+"i"+i];
+      el.textContent=done?"✅":"⚪";
+      el.classList.toggle("done",done);
+    }
+  }));
+}
+/* 실시간 감시: 회원이 포털에서 체크하는 즉시 자동 갱신 (onSnapshot) */
 let doneUnsub=null;
 function stopDoneWatch(){ if(doneUnsub){ try{doneUnsub();}catch(e){} doneUnsub=null; } }
 function watchDoneStatus(){
   stopDoneWatch();
   const el=document.getElementById("doneStatus"); if(!el) return;
   const c=DB.clients.find(x=>x.id===currentClientId); const p=c&&DB.programs[c.id]; if(!p) return;
-  if(!cloudOn){ el.innerHTML=`<div class="disclaimer">고객 포털(Firebase)이 켜지면 여기서 고객의 완료 체크 현황을 볼 수 있어요.</div>`; return; }
+  if(!cloudOn){ el.innerHTML=`<div class="disclaimer">고객 포털(Firebase)이 켜지면 여기서 회원의 완료 체크 현황을 볼 수 있어요.</div>`; return; }
   el.innerHTML=`<p style="color:var(--text-dim);font-size:13px;margin-top:14px;">완료 현황 불러오는 중…</p>`;
   const cid=c.id;
   doneUnsub = cloud.collection("completions").doc(cid).onSnapshot(
@@ -957,6 +976,7 @@ function watchDoneStatus(){
       const comp=(snap.exists&&snap.data())||{};
       const cur=DB.clients.find(x=>x.id===cid), pp=cur&&DB.programs[cid], box=document.getElementById("doneStatus");
       if(pp&&box) box.innerHTML=doneStatusHTML(pp,comp);
+      if(pp) updateExerciseChecks(pp,comp);
     },
     err=>{ console.warn("done watch",err); const e2=document.getElementById("doneStatus"); if(e2) e2.innerHTML=`<p style="color:var(--text-mute);font-size:12px;margin-top:14px;">완료 현황을 불러오지 못했어요.</p>`; }
   );
@@ -1040,14 +1060,14 @@ function addDayToWeek(wi){
 function viewProgram(){
   if(DB.clients.length===0){
     return `<h1 class="page-title">운동 프로그램 생성기</h1>
-      <p class="page-sub">고객의 목표·수준·기구·주 횟수를 넣으면 주차별 프로그램을 자동으로 만들어요.</p>
-      <div class="card"><div class="empty"><div class="big">🏋️</div>먼저 <b>고객 관리</b>에서 고객을 등록해 주세요.</div>
-      <div class="row-actions" style="justify-content:center"><button class="btn btn-primary" onclick="go('clients')">고객 등록하러 가기</button></div></div>`;
+      <p class="page-sub">회원의 목표·수준·기구·주 횟수를 넣으면 주차별 프로그램을 자동으로 만들어요.</p>
+      <div class="card"><div class="empty"><div class="big">🏋️</div>먼저 <b>회원 관리</b>에서 회원을 등록해 주세요.</div>
+      <div class="row-actions" style="justify-content:center"><button class="btn btn-primary" onclick="go('clients')">회원 등록하러 가기</button></div></div>`;
   }
   if(!currentClientId) currentClientId=DB.clients[0].id;
   const c = DB.clients.find(x=>x.id===currentClientId);
   return `<h1 class="page-title">운동 프로그램 생성기</h1>
-    <p class="page-sub">선택한 고객 정보로 주차별(세트/반복/점진 부하) 프로그램을 만들고 PDF로 저장하세요.</p>
+    <p class="page-sub">선택한 회원 정보로 주차별(세트/반복/점진 부하) 프로그램을 만들고 PDF로 저장하세요.</p>
     ${clientBarHTML()}${programSection(c)}`;
 }
 function programSection(c){
@@ -1241,7 +1261,7 @@ const CHECKIN_TPL = {
 };
 function generateCheckin(){
   const c=DB.clients.find(x=>x.id===currentClientId);
-  if(!c){toast("먼저 고객을 선택하세요");return;}
+  if(!c){toast("먼저 회원을 선택하세요");return;}
   const sit=document.getElementById("ckSit").value;
   const memo=document.getElementById("ckMemo").value.trim();
   const tpls=CHECKIN_TPL[sit]||CHECKIN_TPL["순조"];
@@ -1259,18 +1279,18 @@ function generateCheckin(){
 }
 function viewCheckin(){
   if(DB.clients.length===0){
-    return `<h1 class="page-title">주간 체크인 메시지</h1><p class="page-sub">고객에게 보낼 주간 체크인 메시지를 ${COACH} 코치 말투로 만들어요.</p>
-    <div class="card"><div class="empty"><div class="big">💬</div>먼저 <b>고객 관리</b>에서 고객을 등록해 주세요.</div>
-    <div class="row-actions" style="justify-content:center"><button class="btn btn-primary" onclick="go('clients')">고객 등록하러 가기</button></div></div>`;
+    return `<h1 class="page-title">주간 체크인 메시지</h1><p class="page-sub">회원에게 보낼 주간 체크인 메시지를 ${COACH} 코치 말투로 만들어요.</p>
+    <div class="card"><div class="empty"><div class="big">💬</div>먼저 <b>회원 관리</b>에서 회원을 등록해 주세요.</div>
+    <div class="row-actions" style="justify-content:center"><button class="btn btn-primary" onclick="go('clients')">회원 등록하러 가기</button></div></div>`;
   }
   if(!currentClientId) currentClientId=DB.clients[0].id;
   const sitOpts=CHECKIN_SITUATIONS.map(s=>`<option value="${s.key}">${s.label}</option>`).join("");
   return `<h1 class="page-title">주간 체크인 메시지</h1>
-    <p class="page-sub">선택한 고객의 상황에 맞춰 따뜻한 체크인 메시지 초안을 만들어요. 복사해서 카톡·DM으로 바로 보내세요.</p>
+    <p class="page-sub">선택한 회원의 상황에 맞춰 따뜻한 체크인 메시지 초안을 만들어요. 복사해서 카톡·DM으로 바로 보내세요.</p>
     ${clientBarHTML()}
     <div class="card">
       <h3>💬 상황 선택</h3>
-      <div><label class="fld">이번 주 고객 상황</label><select id="ckSit">${sitOpts}</select></div>
+      <div><label class="fld">이번 주 회원 상황</label><select id="ckSit">${sitOpts}</select></div>
       <div style="margin-top:14px;"><label class="fld">한 줄 메모 (선택)</label>
         <input type="text" id="ckMemo" placeholder="예) 지난주 3회 다 나옴 / 어깨가 뻐근하다고 함" /></div>
       <div class="row-actions"><button class="btn btn-primary" onclick="generateCheckin()">⚡ 메시지 생성</button></div>
@@ -1381,7 +1401,7 @@ function renderFaqLog(){
 function viewFaq(){
   const quick=["단백질 얼마나 먹어요?","스쿼트 무릎이 아파요","정체기가 왔어요","주 몇 번 해야 해요?","여자도 근육 커지나요?"];
   return `<h1 class="page-title">FAQ 챗봇</h1>
-    <p class="page-sub">폼·식단·통증 등 자주 묻는 질문에 ${COACH} 코치 말투로 답하는 도우미예요. 고객에게 링크로 공유해도 좋아요.</p>
+    <p class="page-sub">폼·식단·통증 등 자주 묻는 질문에 ${COACH} 코치 말투로 답하는 도우미예요. 회원에게 링크로 공유해도 좋아요.</p>
     <div class="card">
       <div style="display:flex;align-items:center;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-dim);">대화</span><button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="clearFaq()">🗑 대화 지우기</button></div>
       <div class="chat" id="faqChat"></div>
@@ -1434,7 +1454,7 @@ function feedbackFormSection(c){
 }
 function viewFeedback(){
   if(DB.clients.length===0){
-    return `<h1 class="page-title">피드백 · 식단</h1><div class="card"><div class="empty"><div class="big">📝</div>먼저 <b>고객 관리</b>에서 고객을 등록해 주세요.</div></div>`;
+    return `<h1 class="page-title">피드백 · 식단</h1><div class="card"><div class="empty"><div class="big">📝</div>먼저 <b>회원 관리</b>에서 회원을 등록해 주세요.</div></div>`;
   }
   if(!currentClientId) currentClientId=DB.clients[0].id;
   const c=DB.clients.find(x=>x.id===currentClientId);
@@ -1631,7 +1651,7 @@ function viewSchedule(){
   if(DB.clients.length===0){
     return `<h1 class="page-title">PT 일정</h1>
       <p class="page-sub">회원별 수업 시간을 달력에 등록하고, 날짜를 눌러 그날 수업을 한눈에 봐요.</p>
-      <div class="card"><div class="empty"><div class="big">🗓️</div>먼저 <b>고객 관리</b>에서 회원을 등록해 주세요.</div>
+      <div class="card"><div class="empty"><div class="big">🗓️</div>먼저 <b>회원 관리</b>에서 회원을 등록해 주세요.</div>
       <div class="row-actions" style="justify-content:center"><button class="btn btn-primary" onclick="go('clients')">회원 등록하러 가기</button></div></div>`;
   }
   if(schedView==="week"){
